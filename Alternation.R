@@ -52,7 +52,6 @@ ggplot(Merged, aes(x=Age, y=alternation_rate, colour=BroodRef))+
   theme_classic()
 
 # Can see from this graph nearly every one has day 6 and day 10 so filter dataframe to reflect this
-# Need this to do t test anyway
 
 MergedD6D10 <- filter(Merged, Age == 6 | Age == 10)
 View(MergedD6D10)
