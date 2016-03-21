@@ -7,6 +7,8 @@ library(dplyr)
 library(tidyr)
 
 # This code reads in the data file provtest.csv
+# Visit data from Issie template excels extracted by Malika
+# Contains Tin Tout Sex Filename
 Fullprovisioning <- read.csv("~/University/provtest.csv")
 
 # Group data by video file (grouping by nestbox)
