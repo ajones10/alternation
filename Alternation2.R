@@ -92,3 +92,4 @@ BroodAltAge<- plyr::rename(BroodAltAge, c("6" = "Age6", "10" = "Age10"))
 # Do a t-test
 #            (trying new method)
 with(BroodAltAge, t.test(Age6, Age10, paired=TRUE))
+
