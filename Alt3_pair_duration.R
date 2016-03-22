@@ -81,3 +81,59 @@ library(multcomp) # Installs library for Tukey
 Tukey<-(glht(pair1mod, linfct=mcp(BroodRef="Tukey")))
 summary(Tukey)
 
+######
+###
+# Now trying again with a different pair. This time MumID= 4663 and she has two different males
+# DadID= 5871 and DadID= 5424
+
+# First with 4663 and 5871 (2012)
+
+Pair2 <- filter(Merged, SocialMumID==4663 & SocialDadID==5871)
+
+# Exclude rows where only one measurement e.g Age 6 only
+Pair2<- subset(Pair2,duplicated(BroodRef) | duplicated(BroodRef, fromLast=TRUE))
+
+# Plot a graph to see what happens
+ggplot(Pair2, aes(x=BroodRef, y=alternation_rate, colour=Age))+
+  geom_point()+
+  geom_line(aes(group=Age))+
+  theme_classic()
+
+# Make a model
+Pair2$BroodRef <- factor(Pair2$BroodRef)
+
+pair2mod<- lm(alternation_rate ~ BroodRef, data=Pair2)
+par(mfrow=c(2,2))
+plot(pair2mod)
+
+anova(pair2mod)
+summary(pair2mod)
+
+Tukey<-(glht(pair2mod, linfct=mcp(BroodRef="Tukey")))
+summary(Tukey)
+
+# Secondly with 4663 and 5424 (2013 and 2014)
+
+Pair3 <- filter(Merged, SocialMumID==4663 & SocialDadID==5424)
+
+# Exclude rows where only one measurement e.g Age 6 only
+Pair3<- subset(Pair3,duplicated(BroodRef) | duplicated(BroodRef, fromLast=TRUE))
+
+# Plot a graph to see what happens
+ggplot(Pair3, aes(x=BroodRef, y=alternation_rate, colour=Age))+
+  geom_point()+
+  geom_line(aes(group=Age))+
+  theme_classic()
+
+# Make a model
+Pair3$BroodRef <- factor(Pair3$BroodRef)
+
+pair3mod<- lm(alternation_rate ~ BroodRef, data=Pair3)
+par(mfrow=c(2,2))
+plot(pair3mod)
+
+anova(pair3mod)
+summary(pair3mod)
+
+Tukey<-(glht(pair3mod, linfct=mcp(BroodRef="Tukey")))
+summary(Tukey)
