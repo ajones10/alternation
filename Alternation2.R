@@ -69,8 +69,5 @@ MergedD6D10 <- filter(Merged, Age == 6 | Age == 10)
 # need to exclude rows where only one measurement e.g Age 6 only
 MergedD6D10<- subset(MergedD6D10,duplicated(BroodRef) | duplicated(BroodRef, fromLast=TRUE))
 
-# Repeat graph
-ggplot(MergedD6D10, aes(x=Age, y=alternation_rate, colour=BroodRef))+
-  geom_point(size=3)+
-  geom_line(aes(group=BroodRef), size=1)+
-  theme_classic()
+
+
