@@ -80,7 +80,11 @@ summarise(group_by(MergedD6D10, Age),
           varalt= var(alternation_rate)
           )
 
+BroodAltAge<- select(MergedD6D10, BroodRef, Age, alternation_rate)
 
-t.test(alternation_rate ~ Age, data=MergedD6D10)
+#Spread?
+BroodAltAge<- spread(BroodAltAge, Age, alternation_rate)
 
-t.test(alternation_rate ~ Age, data=MergedD6D10, paired=TRUE)
+#Rename age columns
+BroodAltAge<- plyr::rename(BroodAltAge, c("6" = "Age6", "10" = "Age10"))
+View(BroodAltAge)
