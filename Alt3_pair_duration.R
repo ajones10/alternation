@@ -139,3 +139,10 @@ summary(pair3mod)
 
 Tukey<-(glht(pair3mod, linfct=mcp(BroodRef="Tukey")))
 summary(Tukey)
+
+#####
+# Trying glm instead
+pair1mod<- glm(cbind(number_alternations, count) ~ Age*BroodRef, data=Pair1, family="binomial")
+par(mfrow=c(2,2))
+plot(pair1mod)
+##does not work
