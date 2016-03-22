@@ -130,3 +130,8 @@ summary(mod2)
 # Removing zeros makes data normally distributed
 # No longer any significant repeatability
 # Other factors?
+#
+## 22/03/2016
+# Sample size here has 153 observations where there is non-zero alternation for age 6 and age 10
+# Only covers 2012, 2013, 2014. Lots more data available
+# Repeat this once rest has been distracted and compare results.
