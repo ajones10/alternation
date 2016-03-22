@@ -69,5 +69,18 @@ MergedD6D10 <- filter(Merged, Age == 6 | Age == 10)
 # need to exclude rows where only one measurement e.g Age 6 only
 MergedD6D10<- subset(MergedD6D10,duplicated(BroodRef) | duplicated(BroodRef, fromLast=TRUE))
 
+## Box plot
+ggplot(MergedD6D10, aes(x= Age, y=alternation_rate, group=Age))+
+  geom_boxplot()+
+  theme_classic()
+
+summarise(group_by(MergedD6D10, Age),
+          meanalt= mean(alternation_rate),
+          sample= length(BroodRef),
+          varalt= var(alternation_rate)
+          )
 
 
+t.test(alternation_rate ~ Age, data=MergedD6D10)
+
+t.test(alternation_rate ~ Age, data=MergedD6D10, paired=TRUE)
