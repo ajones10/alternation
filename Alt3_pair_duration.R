@@ -51,6 +51,8 @@ BroodsPerPair <- read.csv("C:/Users/Andrew Jones/SkyDrive/Documents/Git Analysis
 # This merges the alternation summary data with the BroodsPerPair query from the database
 
 Merged<-merge(Summarydata, BroodsPerPair, "Filename")
+# Add age as a factor
+Merged$Age <- factor(Merged$Age)
 
 ###
 # Now going to try and see, for one pair, if anything happens across brood events
