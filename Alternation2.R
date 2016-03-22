@@ -77,14 +77,18 @@ ggplot(MergedD6D10, aes(x= Age, y=alternation_rate, group=Age))+
 summarise(group_by(MergedD6D10, Age),
           meanalt= mean(alternation_rate),
           sample= length(BroodRef),
-          varalt= var(alternation_rate)
+          varalt= var(alternation_rate)         # Variances are not equal
           )
 
+# Below few lines rearrangeing graph like previous file
 BroodAltAge<- select(MergedD6D10, BroodRef, Age, alternation_rate)
 
-#Spread?
+# Spread
 BroodAltAge<- spread(BroodAltAge, Age, alternation_rate)
 
-#Rename age columns
+# Rename age columns
 BroodAltAge<- plyr::rename(BroodAltAge, c("6" = "Age6", "10" = "Age10"))
-View(BroodAltAge)
+
+# Do a t-test
+#            (trying new method)
+with(BroodAltAge, t.test(Age6, Age10, paired=TRUE))
