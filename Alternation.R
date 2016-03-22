@@ -56,11 +56,9 @@ ggplot(Merged, aes(x=Age, y=alternation_rate, colour=BroodRef))+
 # Can see from this graph nearly every one has day 6 and day 10 so filter dataframe to reflect this
 
 MergedD6D10 <- filter(Merged, Age == 6 | Age == 10)
-View(MergedD6D10)
 
 # need to exclude rows where only one measurement e.g Age 6 only
 MergedD6D10<- subset(MergedD6D10,duplicated(BroodRef) | duplicated(BroodRef, fromLast=TRUE))
-View(MergedD6D10)
 
 # Repeat graph
 ggplot(MergedD6D10, aes(x=Age, y=alternation_rate, colour=BroodRef))+
@@ -72,11 +70,9 @@ ggplot(MergedD6D10, aes(x=Age, y=alternation_rate, colour=BroodRef))+
 # Select() the columns alternation brood ref and age may solve some issues 
 
 BroodAltAge<- select(MergedD6D10, BroodRef, Age, alternation_rate)
-View(BroodAltAge)
 
 #Spread?
 BroodAltAge<- spread(BroodAltAge, Age, alternation_rate)
-View(BroodAltAge)
 
 #Rename age columns
 BroodAltAge<- plyr::rename(BroodAltAge, c("6" = "Age6", "10" = "Age10"))
