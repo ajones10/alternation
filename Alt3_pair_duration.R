@@ -30,119 +30,61 @@ Summarydata<-summarise(by_pair,
                        number_alternations= sum(diff(Sex)!=0),
                        alternation_rate= number_alternations/count)
 
-# Plots the alternation rates as a histogram
-ggplot(Summarydata, aes(x=alternation_rate))+
-  geom_histogram(binwidth=0.05, col="grey")+
-  theme_classic()
 
-#####
-#
-# More work, looking at broods
-# 2012 to 2014 (inclusive) only 
-#####
-
-# Query created in db which gets info for broods where social parents are certain, and situation=4 (chicks)
-# Looks at female as focal parent so that data is not duplicated
-# Provisioning videos at days 6, 7, 10, 11 only for consistency
-# although this is indirect, probably quicker way to get it straight from db
 # This code reads in the data file AJ_BroodsPerPair.csv
 BroodsPerPair <- read.csv("C:/Users/Andrew Jones/SkyDrive/Documents/Git Analysis/Project testing/AJ_BroodsPerPair.csv")
 
 # This merges the alternation summary data with the BroodsPerPair query from the database
 
 Merged<-merge(Summarydata, BroodsPerPair, "Filename")
-# Add age as a factor
+
+# This creates a "PairID" 
+Merged <- transform(Merged, PairID = as.numeric(interaction(SocialMumID, SocialDadID, drop=TRUE)))
+
+# Factors
+Merged$PairID <- factor(Merged$PairID)
 Merged$Age <- factor(Merged$Age)
 
-###
-# Now going to try and see, for one pair, if anything happens across brood events
-# MumID= 4576 and DadID= 4682 (selected because have a number of differnet broods)
+# 6 and 10 only
 
-Pair1 <- filter(Merged, SocialMumID==4576 & SocialDadID==4682)
+MergedD6D10 <- filter(Merged, Age == 6 | Age == 10)
 
-# Exclude rows where only one measurement e.g Age 6 only
-Pair1<- subset(Pair1,duplicated(BroodRef) | duplicated(BroodRef, fromLast=TRUE))
+# need to exclude rows where only one measurement e.g Age 6 only
+MergedD6D10<- subset(MergedD6D10,duplicated(BroodRef) | duplicated(BroodRef, fromLast=TRUE))
 
-# Plot a graph to see what happens
-ggplot(Pair1, aes(x=BroodRef, y=alternation_rate, colour=Age))+
-  geom_point()+
-  geom_line(aes(group=Age))+
+
+# Repeat graph
+ggplot(MergedD6D10, aes(x=BroodRef, y=alternation_rate, colour=Age))+
+  geom_point(size=3)+
+  geom_line(aes(group=Age), size=1)+
+  facet_wrap(~PairID)+
   theme_classic()
 
-# Make a model
-Pair1$BroodRef <- factor(Pair1$BroodRef)
+# Try day 6 only and day 10 only separately
+MergedD6 <- filter(MergedD6D10, Age == 6)
+MergedD10 <- filter(MergedD6D10, Age == 10)
 
-pair1mod<- lm(alternation_rate ~ BroodRef, data=Pair1)
-par(mfrow=c(2,2))
-plot(pair1mod)
+# Exclude observations where pair only has one brood
+MergedD6<- subset(MergedD6,duplicated(PairID) | duplicated(PairID, fromLast=TRUE))
+MergedD10<- subset(MergedD10,duplicated(PairID) | duplicated(PairID, fromLast=TRUE))
 
-anova(pair1mod)
-summary(pair1mod)
-
-library(multcomp) # Installs library for Tukey
-Tukey<-(glht(pair1mod, linfct=mcp(BroodRef="Tukey")))
-summary(Tukey)
-
-######
-###
-# Now trying again with a different pair. This time MumID= 4663 and she has two different males
-# DadID= 5871 and DadID= 5424
-
-# First with 4663 and 5871 (2012)
-
-Pair2 <- filter(Merged, SocialMumID==4663 & SocialDadID==5871)
-
-# Exclude rows where only one measurement e.g Age 6 only
-Pair2<- subset(Pair2,duplicated(BroodRef) | duplicated(BroodRef, fromLast=TRUE))
-
-# Plot a graph to see what happens
-ggplot(Pair2, aes(x=BroodRef, y=alternation_rate, colour=Age))+
-  geom_point()+
-  geom_line(aes(group=Age))+
+# Repeat graph
+ggplot(MergedD6, aes(x=BroodRef, y=alternation_rate, colour=PairID))+
+  geom_point(size=3)+
+  geom_line(aes(group=PairID), size=1)+
   theme_classic()
 
-# Make a model
-Pair2$BroodRef <- factor(Pair2$BroodRef)
+# Now need to work out how to standardize x axis, eg Brood Number
+MergedD6<- ddply(MergedD6,.(PairID),transform,BroodNumber = rank(BroodRef,ties.method = "first"))
+MergedD10<- ddply(MergedD10,.(PairID),transform,BroodNumber = rank(BroodRef,ties.method = "first"))
 
-pair2mod<- lm(alternation_rate ~ BroodRef, data=Pair2)
-par(mfrow=c(2,2))
-plot(pair2mod)
-
-anova(pair2mod)
-summary(pair2mod)
-
-Tukey<-(glht(pair2mod, linfct=mcp(BroodRef="Tukey")))
-summary(Tukey)
-
-# Secondly with 4663 and 5424 (2013 and 2014)
-
-Pair3 <- filter(Merged, SocialMumID==4663 & SocialDadID==5424)
-
-# Exclude rows where only one measurement e.g Age 6 only
-Pair3<- subset(Pair3,duplicated(BroodRef) | duplicated(BroodRef, fromLast=TRUE))
-
-# Plot a graph to see what happens
-ggplot(Pair3, aes(x=BroodRef, y=alternation_rate, colour=Age))+
-  geom_point()+
-  geom_line(aes(group=Age))+
+# Repeat graph
+ggplot(MergedD6, aes(x=BroodNumber, y=alternation_rate, colour=PairID))+
+  geom_point(size=3)+
+  geom_line(aes(group=PairID), size=1)+
   theme_classic()
 
-# Make a model
-Pair3$BroodRef <- factor(Pair3$BroodRef)
-
-pair3mod<- lm(alternation_rate ~ BroodRef, data=Pair3)
-par(mfrow=c(2,2))
-plot(pair3mod)
-
-anova(pair3mod)
-summary(pair3mod)
-
-Tukey<-(glht(pair3mod, linfct=mcp(BroodRef="Tukey")))
-summary(Tukey)
-
-#####
-# Trying glm instead
-pair1mod<- glm(cbind(number_alternations, count) ~ Age*BroodRef, data=Pair1, family="binomial")
-par(mfrow=c(2,2))
-plot(pair1mod)
-##does not work
+ggplot(MergedD10, aes(x=BroodNumber, y=alternation_rate, colour=PairID))+
+  geom_point(size=3)+
+  geom_line(aes(group=PairID), size=1)+
+  theme_classic()
