@@ -12,8 +12,10 @@ rm(list=ls())
 
 # Load required libraries
 library(ggplot2)
+library(plyr)
 library(dplyr)
 library(tidyr)
+library(gridExtra)
 
 # This code reads in the data file provtest.csv
 # Visit data from Issie template excels extracted by Malika
@@ -25,7 +27,7 @@ by_pair <-group_by(Fullprovisioning, Filename)
 
 # For each pair calculates the number of visits (count), the number of alternations, and the
 # alternation rate.
-Summarydata<-summarise(by_pair,
+Summarydata<-dplyr::summarise(by_pair,
                        count = n(),
                        number_alternations= sum(diff(Sex)!=0),
                        alternation_rate= number_alternations/count)
@@ -79,12 +81,18 @@ MergedD6<- ddply(MergedD6,.(PairID),transform,BroodNumber = rank(BroodRef,ties.m
 MergedD10<- ddply(MergedD10,.(PairID),transform,BroodNumber = rank(BroodRef,ties.method = "first"))
 
 # Repeat graph
-ggplot(MergedD6, aes(x=BroodNumber, y=alternation_rate, colour=PairID))+
+Age6Plot<-ggplot(MergedD6, aes(x=BroodNumber, y=alternation_rate, colour=PairID))+
   geom_point(size=3)+
+  ylim(0,1)+
   geom_line(aes(group=PairID), size=1)+
+  guides(color="none")+
   theme_classic()
 
-ggplot(MergedD10, aes(x=BroodNumber, y=alternation_rate, colour=PairID))+
+Age10Plot<-ggplot(MergedD10, aes(x=BroodNumber, y=alternation_rate, colour=PairID))+
   geom_point(size=3)+
+  ylim(0,1)+
   geom_line(aes(group=PairID), size=1)+
+  guides(color="none")+
   theme_classic()
+
+grid.arrange(Age6Plot, Age10Plot)
