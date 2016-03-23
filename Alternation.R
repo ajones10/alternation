@@ -45,6 +45,9 @@ Merged<-merge(Summarydata, BroodsPerPair, "Filename")
 
 # This looks to have worked! 
 
+# This creates a "PairID" 
+Merged <- transform(Merged, PairID = as.numeric(interaction(SocialMumID, SocialDadID, drop=TRUE)))
+
 ##### Investigating repeatability of alternation within a brood event
 
 # Now to create graph where x=age (day of video) y=alternation grouped by pair
