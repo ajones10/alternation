@@ -163,3 +163,57 @@ model6.1<-lmer(alternation_rate ~ BroodNumber + (1 + BroodNumber | PairID), data
 model6.4<-lmer(alternation_rate ~ BroodNumber + (1 + BroodNumber || PairID), data= MergedD6No0)
 anova(model6.1, model6.4, refit=FALSE)
 # No, p=0.8
+
+############
+## Now repeat models, for Age 10
+############
+
+ci2 <- confint(lmList(alternation_rate ~ BroodNumber | PairID, MergedD10No0), pooled = TRUE)
+plot(ci2, order = 1)
+
+model10.1 <- lmer(alternation_rate ~ BroodNumber + (1 + BroodNumber | PairID), data= MergedD10No0)
+
+# Model diagnostics section (adapted from R course Soay Sheep model)
+diagnostics <- fortify(model10.1)
+# Residuals vs fitted plot:
+p10.1<- ggplot(diagnostics, aes(x= .fitted, y= .resid))+
+  geom_point()+
+  geom_hline(yintercept= 0, linetype= "dashed")+
+  theme_classic()
+
+# Q-Q plot
+p10.2<-ggplot(diagnostics, aes(sample= .scresid))+
+  stat_qq()+
+  geom_abline()+
+  theme_classic()
+
+# Resids vs Fits divided up by PairID
+p10.3<- ggplot(diagnostics, aes(x= .fitted, y= .resid))+
+  geom_point()+
+  geom_hline(yintercept= 0, linetype= "dashed")+
+  facet_wrap(~PairID, ncol=5)+
+  theme_classic()
+
+# Put them altogether
+grid.arrange(p10.1, p10.2, p10.3, ncol=2)
+
+# Testing
+#### FIXED
+# Is the fixed effect of Brood Number significant?
+model10.1<-lmer(alternation_rate ~ BroodNumber + (1 + BroodNumber | PairID), data= MergedD10No0)
+model10.2<-lmer(alternation_rate ~               (1 + BroodNumber | PairID), data= MergedD10No0)
+anova(model10.1, model10.2)
+# No, p=0.9635
+
+#### RANDOM
+# Is the among pair variation significant?
+model10.1<-lmer(alternation_rate ~ BroodNumber + (1 + BroodNumber | PairID), data= MergedD10No0)
+model10.3<-lmer(alternation_rate ~ BroodNumber + (1               | PairID), data= MergedD10No0)
+anova(model10.1, model10.3, refit=FALSE) # remember refit=false because random test
+# No, p=0.8412
+
+# Is the correlation term significant?
+model10.1<-lmer(alternation_rate ~ BroodNumber + (1 + BroodNumber | PairID), data= MergedD10No0)
+model10.4<-lmer(alternation_rate ~ BroodNumber + (1 + BroodNumber || PairID), data= MergedD10No0)
+anova(model10.1, model10.4, refit=FALSE)
+# No, p=0.5565
