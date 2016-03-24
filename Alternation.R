@@ -15,14 +15,13 @@ library(tidyr)
 library(RODBC)
 library(gridExtra)
 
-# Read in the excel file with raw data
-# Currently this code reads in the data file provtest.csv
-# Contains visit data from Issie template excels extracted by Malika
-# Contains Tin Tout Sex Filename
-Fullprovisioning <- read.csv("~/University/provtest.csv")
+# Read in the excel file with raw data R_RawFeedingVisits.csv
+# Contains DVDRef TstartFeedVisit TendFeedVisit Sex
+# Sex=0 for female, =1 for male
+Fullprovisioning <- read.csv("C:\\Users\\Andrew Jones\\Documents\\University\\Level 4\\Project\\R_RawFeedingVisits.csv")
 
 # Group data by video file (grouping by nestbox)
-by_pair <-group_by(Fullprovisioning, Filename)
+by_pair <-group_by(Fullprovisioning, DVDRef)
 
 # For each pair calculates the number of visits (count), the number of alternations, and the
 # alternation rate.
@@ -57,7 +56,7 @@ close(conDB) # closes connection to db
 
 # Merge the alternation summary data with the BroodsPerPair query from the database:
 
-Merged<-merge(Summarydata, BroodsPerPair, "Filename") # merging by 'Filename'
+Merged<-merge(Summarydata, BroodsPerPair, "DVDRef") # merging by 'DVDRef'
 
 # Creating new Columns
 # This creates a "PairID" 
