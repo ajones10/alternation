@@ -30,6 +30,8 @@ by_pair <-group_by(Fullprovisioning, Filename)
 # alternation rate.
 Summarydata<-dplyr::summarise(by_pair,
                        count = n(),
+                       malecount = length(Sex[Sex==1]),
+                       femalecount = length(Sex[Sex==0]),
                        number_alternations= sum(diff(Sex)!=0),
                        alternation_rate= number_alternations/count)
 
