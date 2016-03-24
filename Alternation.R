@@ -63,6 +63,20 @@ Merged <- transform(Merged, male_visit_rate = (malecount/EffectTime)*60)
 Merged <- transform(Merged, female_visit_rate = (femalecount/EffectTime)*60)
 Merged <- transform(Merged, visit_rate_difference = abs(male_visit_rate - female_visit_rate))
 
+# Check distributions
+ggplot(Merged, aes(x= male_visit_rate))+
+  geom_histogram(binwidth=1)+
+  theme_classic()
+
+ggplot(Merged, aes(x= female_visit_rate))+
+  geom_histogram(binwidth=1)+
+  theme_classic()
+
+ggplot(Merged, aes(x= visit_rate_difference))+
+  geom_histogram(binwidth=1)+
+  theme_classic()
+
+
 ##### Investigating repeatability of alternation within a brood event
 
 # Now to create graph where x=age (day of video) y=alternation grouped by pair
