@@ -5,6 +5,7 @@ rm(list=ls())
 library(ggplot2)
 library(dplyr)
 library(tidyr)
+library(RODBC)
 
 # This code reads in the data file provtest.csv
 # Visit data from Issie template excels extracted by Malika
@@ -18,6 +19,8 @@ by_pair <-group_by(Fullprovisioning, Filename)
 # alternation rate.
 Summarydata<-summarise(by_pair,
                        count = n(),
+                       malecount = length(Sex[Sex==1]),
+                       femalecount = length(Sex[Sex==0]),
                        number_alternations= sum(diff(Sex)!=0),
                        alternation_rate= number_alternations/count)
 
@@ -35,9 +38,15 @@ ggplot(Summarydata, aes(x=alternation_rate))+
 # Query created in db which gets info for broods where social parents are certain, and situation=4 (chicks)
 # Looks at female as focal parent so that data is not duplicated
 # Provisioning videos at days 6, 7, 10, 11 only for consistency
-# although this is indirect, probably quicker way to get it straight from db
-# This code reads in the data file AJ_BroodsPerPair.csv
-BroodsPerPair <- read.csv("C:/Users/Andrew Jones/SkyDrive/Documents/Git Analysis/Project testing/AJ_BroodsPerPair.csv")
+
+## Get BroodsPerPairUpdated query from database
+conDB= odbcConnectAccess("C:\Users\Andrew Jones\Documents\University\Level 4\Project\Database Copy\Database0.74_20160310_MI\SparrowData.mdb")
+
+BroodsPerPair <- sqlQuery(conDB, "
+                          SELECT tblBroods.SocialMumID, tblBroods.SocialDadID, tblBroods.SocialMumCertain, tblBroods.SocialDadCertain, tblBroods.BroodRef, tblDVDInfo.Situation, tblDVDInfo.DVDRef, tblDVDInfo.DVDNumber, tblDVD_XlsFiles.Filename, tblDVDInfo.Age, tblDVDInfo.DVDdate, tblDVDInfo.DVDtime, tblDVDInfo.OffspringNo, tblParentalCare.EffectTime
+FROM ((tblBroods INNER JOIN tblDVDInfo ON tblBroods.BroodRef = tblDVDInfo.BroodRef) INNER JOIN tblDVD_XlsFiles ON tblDVDInfo.DVDRef = tblDVD_XlsFiles.DVDRef) INNER JOIN tblParentalCare ON (tblDVD_XlsFiles.DVDRef = tblParentalCare.DVDRef) AND (tblDVDInfo.DVDRef = tblParentalCare.DVDRef)
+                          WHERE (((tblBroods.SocialMumCertain)=Yes) AND ((tblBroods.SocialDadCertain)=Yes) AND ((tblDVDInfo.Situation)=4) AND ((tblDVDInfo.Age)=6 Or (tblDVDInfo.Age)=7 Or (tblDVDInfo.Age)=10 Or (tblDVDInfo.Age)=11));")
+close(conDB)
 
 # This merges the alternation summary data with the BroodsPerPair query from the database
 
