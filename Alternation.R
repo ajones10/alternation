@@ -6,6 +6,7 @@ library(ggplot2)
 library(dplyr)
 library(tidyr)
 library(RODBC)
+library(gridExtra)
 
 # This code reads in the data file provtest.csv
 # Visit data from Issie template excels extracted by Malika
@@ -64,18 +65,35 @@ Merged <- transform(Merged, female_visit_rate = (femalecount/EffectTime)*60)
 Merged <- transform(Merged, visit_rate_difference = abs(male_visit_rate - female_visit_rate))
 
 # Check distributions
-ggplot(Merged, aes(x= male_visit_rate))+
+malevisit<- ggplot(Merged, aes(x= male_visit_rate))+
   geom_histogram(binwidth=1)+
   theme_classic()
 
-ggplot(Merged, aes(x= female_visit_rate))+
+femalevisit<- ggplot(Merged, aes(x= female_visit_rate))+
   geom_histogram(binwidth=1)+
   theme_classic()
 
-ggplot(Merged, aes(x= visit_rate_difference))+
+visitdiff<- ggplot(Merged, aes(x= visit_rate_difference))+
   geom_histogram(binwidth=1)+
   theme_classic()
 
+grid.arrange(malevisit, femalevisit, visitdiff, ncol=1)
+
+# Faceted plots 
+ggplot(Merged, aes(x= male_visit_rate, fill=Age))+
+  geom_histogram(binwidth=1)+
+  facet_wrap(~Age, ncol=2)+
+  theme_classic()
+
+ggplot(Merged, aes(x= female_visit_rate, fill=Age))+
+  geom_histogram(binwidth=1)+
+  facet_wrap(~Age, ncol=2)+
+  theme_classic()
+
+ggplot(Merged, aes(x= visit_rate_difference, fill=Age))+
+  geom_histogram(binwidth=1)+
+  facet_wrap(~Age, ncol=2)+
+  theme_classic()
 
 ##### Investigating repeatability of alternation within a brood event
 
