@@ -15,15 +15,15 @@ Looking at how alternation rate changes as the number of broods a pair has incre
 
 
 #Extras
- #Testings.R
+ Testings.R
   Used for trial and error/experimenting before copying across to other scripts
 
- #Alt3 pair duration.R and Alternation predictors.R
+ Alt3 pair duration.R and Alternation predictors.R
   Neither used anymore as RStudio wouldn't commit when there's a space in filename
   
- #AJ_BroodsPerPair.csv
+ AJ_BroodsPerPair.csv
   CSV file of my database query
   
- #Mixed_Models_RCourse_Example.R
+ Mixed_Models_RCourse_Example.R
   I wrote this script in the R course, put here as a tutorial/personal reminder of how to do mixed models.
 
