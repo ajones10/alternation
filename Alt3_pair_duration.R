@@ -16,6 +16,7 @@ library(plyr)
 library(dplyr)
 library(tidyr)
 library(gridExtra)
+library(lme4)
 
 # This code reads in the data file provtest.csv
 # Visit data from Issie template excels extracted by Malika
@@ -217,3 +218,131 @@ model10.1<-lmer(alternation_rate ~ BroodNumber + (1 + BroodNumber | PairID), dat
 model10.4<-lmer(alternation_rate ~ BroodNumber + (1 + BroodNumber || PairID), data= MergedD10No0)
 anova(model10.1, model10.4, refit=FALSE)
 # No, p=0.5565
+
+#############
+### 24/03/2016
+#############
+
+# From looking at broodnumber vs alternation_rate graphs (with no zero alternation):
+# 116 observations for age 6
+# 112 observations for age 10
+# for age 6: only 13 observations where broodnumber >3
+# for age 10: only 12 observations where broodnumber >3
+# could removing these do anything?
+
+# first with age 6
+MergedD6No0.2 <- filter(MergedD6No0, BroodNumber<=3)
+
+ggplot(MergedD6No0.2, aes(x=BroodNumber, y=alternation_rate, colour=PairID))+
+  geom_point(size=3)+
+  ylim(0,1)+
+  geom_line(aes(group=PairID), size=1)+
+  guides(color="none")+
+  theme_classic()
+
+model6.1.1 <- lmer(alternation_rate ~ BroodNumber + (1 + BroodNumber | PairID), data= MergedD6No0.2)
+
+# Model diagnostics section (adapted from R course Soay Sheep model)
+diagnostics3 <- fortify(model6.1.1)
+
+# Residuals vs fitted plot:
+p1.1<- ggplot(diagnostics3, aes(x= .fitted, y= .resid))+
+  geom_point()+
+  geom_hline(yintercept= 0, linetype= "dashed")+
+  theme_classic()
+
+# Q-Q plot
+p2.1<-ggplot(diagnostics3, aes(sample= .scresid))+
+  stat_qq()+
+  geom_abline()+
+  theme_classic()
+
+# Resids vs Fits divided up by PairID
+p3.1<- ggplot(diagnostics3, aes(x= .fitted, y= .resid))+
+  geom_point()+
+  geom_hline(yintercept= 0, linetype= "dashed")+
+  facet_wrap(~PairID, ncol=5)+
+  theme_classic()
+
+# Put them altogether
+grid.arrange(p1.1, p2.1, p3.1, ncol=2)
+
+# Testing the model
+#### FIXED
+# Is the fixed effect of Brood Number significant?
+model6.1.1<-lmer(alternation_rate ~ BroodNumber + (1 + BroodNumber | PairID), data= MergedD6No0.2)
+model6.2.1<-lmer(alternation_rate ~               (1 + BroodNumber | PairID), data= MergedD6No0.2)
+anova(model6.1.1, model6.2.1)
+# No, p=0.4809
+
+#### RANDOM
+# Is the among pair variation significant?
+model6.1.1<-lmer(alternation_rate ~ BroodNumber + (1 + BroodNumber | PairID), data= MergedD6No0.2)
+model6.3.1<-lmer(alternation_rate ~ BroodNumber + (1               | PairID), data= MergedD6No0.2)
+anova(model6.1.1, model6.3.1, refit=FALSE) # remember refit=false because random test
+# No, p=0.8461
+
+# Is the correlation term significant?
+model6.1.1<-lmer(alternation_rate ~ BroodNumber + (1 + BroodNumber | PairID), data= MergedD6No0.2)
+model6.4.1<-lmer(alternation_rate ~ BroodNumber + (1 + BroodNumber || PairID), data= MergedD6No0.2)
+anova(model6.1.1, model6.4.1, refit=FALSE)
+# No, p=0.8241
+
+# Repeat for age 10
+
+MergedD10No0.2 <- filter(MergedD10No0, BroodNumber<=3)
+
+ggplot(MergedD10No0.2, aes(x=BroodNumber, y=alternation_rate, colour=PairID))+
+  geom_point(size=3)+
+  ylim(0,1)+
+  geom_line(aes(group=PairID), size=1)+
+  guides(color="none")+
+  theme_classic()
+
+model10.1.1 <- lmer(alternation_rate ~ BroodNumber + (1 + BroodNumber | PairID), data= MergedD10No0.2)
+
+# Model diagnostics section (adapted from R course Soay Sheep model)
+diagnostics4 <- fortify(model10.1.1)
+
+# Residuals vs fitted plot:
+p1.2<- ggplot(diagnostics4, aes(x= .fitted, y= .resid))+
+  geom_point()+
+  geom_hline(yintercept= 0, linetype= "dashed")+
+  theme_classic()
+
+# Q-Q plot
+p2.2<-ggplot(diagnostics4, aes(sample= .scresid))+
+  stat_qq()+
+  geom_abline()+
+  theme_classic()
+
+# Resids vs Fits divided up by PairID
+p3.2<- ggplot(diagnostics4, aes(x= .fitted, y= .resid))+
+  geom_point()+
+  geom_hline(yintercept= 0, linetype= "dashed")+
+  facet_wrap(~PairID, ncol=5)+
+  theme_classic()
+
+# Put them altogether
+grid.arrange(p1.2, p2.2, p3.2, ncol=2)
+
+# Testing the model
+#### FIXED
+# Is the fixed effect of Brood Number significant?
+model10.1.1<-lmer(alternation_rate ~ BroodNumber + (1 + BroodNumber | PairID), data= MergedD10No0.2)
+model10.2.1<-lmer(alternation_rate ~               (1 + BroodNumber | PairID), data= MergedD10No0.2)
+anova(model10.1.1, model10.2.1)
+# No, p=0.6218
+
+#### RANDOM
+# Is the among pair variation significant?
+model10.1.1<-lmer(alternation_rate ~ BroodNumber + (1 + BroodNumber | PairID), data= MergedD10No0.2)
+model10.3.1<-lmer(alternation_rate ~ BroodNumber + (1               | PairID), data= MergedD10No0.2)
+anova(model10.1.1, model10.3.1, refit=FALSE) # remember refit=false because random test
+# No, p=0.9634
+
+# Is the correlation term significant?
+model10.1.1<-lmer(alternation_rate ~ BroodNumber + (1 + BroodNumber | PairID), data= MergedD10No0.2)
+model10.4.1<-lmer(alternation_rate ~ BroodNumber + (1 + BroodNumber || PairID), data= MergedD10No0.2)
+anova(model10.1.1, model10.4.1, refit=FALSE)
+# No, p=0.7849
