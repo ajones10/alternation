@@ -185,3 +185,30 @@ summary(mod2)
 # Sample size here has 153 observations where there is non-zero alternation for age 6 and age 10
 # Only covers 2012, 2013, 2014. Lots more data available
 # Repeat this once rest has been distracted and compare results.
+
+# 24/03/2016
+ggplot(Merged, aes(x=visit_rate_difference, y=alternation_rate))+
+  geom_point()+
+  theme_classic()
+
+# Round the visit rates to nearest whole number to get whole number differences
+Merged <- transform(Merged, round_male_visit_rate = round(male_visit_rate))
+Merged <- transform(Merged, round_female_visit_rate = round(female_visit_rate))
+Merged <- transform(Merged, visit_rate_diff_after_rounding = abs(round_male_visit_rate - round_female_visit_rate))
+
+ggplot(Merged, aes(x=visit_rate_diff_after_rounding, y=alternation_rate))+
+  geom_point()+
+  theme_classic()
+
+VisitRateSum<-summarise(group_by(Merged, visit_rate_diff_after_rounding),
+          meanalternation = mean(alternation_rate),
+          SDalt= sd(alternation_rate),
+          SampleSize= length(alternation_rate),
+          SE= SDalt/sqrt(SampleSize),
+          lwr= meanalternation-SE,
+          upr= meanalternation+SE)
+
+ggplot(VisitRateSum, aes(x=visit_rate_diff_after_rounding, y=meanalternation))+
+  geom_point()+
+  geom_errorbar(aes(ymin=lwr, ymax=upr))+
+  theme_classic()
