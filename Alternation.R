@@ -40,7 +40,7 @@ ggplot(Summarydata, aes(x=alternation_rate))+
 # Provisioning videos at days 6, 7, 10, 11 only for consistency
 
 ## Get BroodsPerPairUpdated query from database
-conDB= odbcConnectAccess("C:\Users\Andrew Jones\Documents\University\Level 4\Project\Database Copy\Database0.74_20160310_MI\SparrowData.mdb")
+conDB= odbcConnectAccess("C:\\Users\\Andrew Jones\\Documents\\University\\Level 4\\Project\\Database Copy\\Database0.74_20160310_MI\\SparrowData.mdb")
 
 BroodsPerPair <- sqlQuery(conDB, "
                           SELECT tblBroods.SocialMumID, tblBroods.SocialDadID, tblBroods.SocialMumCertain, tblBroods.SocialDadCertain, tblBroods.BroodRef, tblDVDInfo.Situation, tblDVDInfo.DVDRef, tblDVDInfo.DVDNumber, tblDVD_XlsFiles.Filename, tblDVDInfo.Age, tblDVDInfo.DVDdate, tblDVDInfo.DVDtime, tblDVDInfo.OffspringNo, tblParentalCare.EffectTime
@@ -52,10 +52,16 @@ close(conDB)
 
 Merged<-merge(Summarydata, BroodsPerPair, "Filename")
 
-# This looks to have worked! 
-
+# Creating new Columns
 # This creates a "PairID" 
 Merged <- transform(Merged, PairID = as.numeric(interaction(SocialMumID, SocialDadID, drop=TRUE)))
+
+# Create "visit rate" for both Male and Female
+# Per hour to standardise
+# Visit rate per hour = Number of visits/Effect time * 60
+Merged <- transform(Merged, male_visit_rate = (malecount/EffectTime)*60)
+Merged <- transform(Merged, female_visit_rate = (femalecount/EffectTime)*60)
+Merged <- transform(Merged, visit_rate_difference = abs(male_visit_rate - female_visit_rate))
 
 ##### Investigating repeatability of alternation within a brood event
 
