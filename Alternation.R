@@ -196,10 +196,13 @@ Merged <- transform(Merged, round_male_visit_rate = round(male_visit_rate))
 Merged <- transform(Merged, round_female_visit_rate = round(female_visit_rate))
 Merged <- transform(Merged, visit_rate_diff_after_rounding = abs(round_male_visit_rate - round_female_visit_rate))
 
+# Scatter plot of all the points 
 ggplot(Merged, aes(x=visit_rate_diff_after_rounding, y=alternation_rate))+
   geom_point()+
   theme_classic()
 
+# This will summarise the data by the difference in visit rate, giving mean alternation etc
+# Enables a graph to be plotted with error bars
 VisitRateSum<-summarise(group_by(Merged, visit_rate_diff_after_rounding),
           meanalternation = mean(alternation_rate),
           SDalt= sd(alternation_rate),
@@ -208,7 +211,9 @@ VisitRateSum<-summarise(group_by(Merged, visit_rate_diff_after_rounding),
           lwr= meanalternation-SE,
           upr= meanalternation+SE)
 
+# Plots the mean alternation for each difference in rate
 ggplot(VisitRateSum, aes(x=visit_rate_diff_after_rounding, y=meanalternation))+
   geom_point()+
+  geom_line()+
   geom_errorbar(aes(ymin=lwr, ymax=upr))+
   theme_classic()
