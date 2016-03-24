@@ -1,3 +1,10 @@
+##########
+# Andrew Jones
+# 
+# Alternation project script
+#
+##########
+
 # Clear R's Brain
 rm(list=ls())
 
@@ -8,8 +15,9 @@ library(tidyr)
 library(RODBC)
 library(gridExtra)
 
-# This code reads in the data file provtest.csv
-# Visit data from Issie template excels extracted by Malika
+# Read in the excel file with raw data
+# Currently this code reads in the data file provtest.csv
+# Contains visit data from Issie template excels extracted by Malika
 # Contains Tin Tout Sex Filename
 Fullprovisioning <- read.csv("~/University/provtest.csv")
 
@@ -30,13 +38,11 @@ ggplot(Summarydata, aes(x=alternation_rate))+
   geom_histogram(binwidth=0.05, col="grey")+
   theme_classic()
 
-#####
-# 21/03/2016
-# More work, looking at broods
-# 2012 to 2014 (inclusive) only 
-#####
+# Now need to include extra data from database
+# Make a query in the database and then get the SQL code
 
-# Query created in db which gets info for broods where social parents are certain, and situation=4 (chicks)
+#### Next 3 lines need looking at- probably need to change this query to consider everything
+# This query created in db which gets info for broods where social parents are certain, and situation=4 (chicks)
 # Looks at female as focal parent so that data is not duplicated
 # Provisioning videos at days 6, 7, 10, 11 only for consistency
 
@@ -47,11 +53,11 @@ BroodsPerPair <- sqlQuery(conDB, "
                           SELECT tblBroods.SocialMumID, tblBroods.SocialDadID, tblBroods.SocialMumCertain, tblBroods.SocialDadCertain, tblBroods.BroodRef, tblDVDInfo.Situation, tblDVDInfo.DVDRef, tblDVDInfo.DVDNumber, tblDVD_XlsFiles.Filename, tblDVDInfo.Age, tblDVDInfo.DVDdate, tblDVDInfo.DVDtime, tblDVDInfo.OffspringNo, tblParentalCare.EffectTime
 FROM ((tblBroods INNER JOIN tblDVDInfo ON tblBroods.BroodRef = tblDVDInfo.BroodRef) INNER JOIN tblDVD_XlsFiles ON tblDVDInfo.DVDRef = tblDVD_XlsFiles.DVDRef) INNER JOIN tblParentalCare ON (tblDVD_XlsFiles.DVDRef = tblParentalCare.DVDRef) AND (tblDVDInfo.DVDRef = tblParentalCare.DVDRef)
                           WHERE (((tblBroods.SocialMumCertain)=Yes) AND ((tblBroods.SocialDadCertain)=Yes) AND ((tblDVDInfo.Situation)=4) AND ((tblDVDInfo.Age)=6 Or (tblDVDInfo.Age)=7 Or (tblDVDInfo.Age)=10 Or (tblDVDInfo.Age)=11));")
-close(conDB)
+close(conDB) # closes connection to db 
 
-# This merges the alternation summary data with the BroodsPerPair query from the database
+# Merge the alternation summary data with the BroodsPerPair query from the database:
 
-Merged<-merge(Summarydata, BroodsPerPair, "Filename")
+Merged<-merge(Summarydata, BroodsPerPair, "Filename") # merging by 'Filename'
 
 # Creating new Columns
 # This creates a "PairID" 
@@ -95,7 +101,49 @@ ggplot(Merged, aes(x= visit_rate_difference, fill=Age))+
   facet_wrap(~Age, ncol=2)+
   theme_classic()
 
+# Scatter plot
+ggplot(Merged, aes(x=visit_rate_difference, y=alternation_rate))+
+  geom_point()+
+  theme_classic()
+
+# Round the visit rates to nearest whole number to get whole number differences
+# Create new columns
+Merged <- transform(Merged, round_male_visit_rate = round(male_visit_rate))
+Merged <- transform(Merged, round_female_visit_rate = round(female_visit_rate))
+Merged <- transform(Merged, visit_rate_diff_after_rounding = abs(round_male_visit_rate - round_female_visit_rate))
+
+# Scatter plot of all the points 
+ggplot(Merged, aes(x=visit_rate_diff_after_rounding, y=alternation_rate))+
+  geom_point()+
+  theme_classic()
+
+# This will summarise the data by the difference in visit rate, giving mean alternation etc
+# Enables a graph to be plotted with error bars
+VisitRateSum<-summarise(group_by(Merged, visit_rate_diff_after_rounding),
+                        meanalternation = mean(alternation_rate),
+                        SDalt= sd(alternation_rate),
+                        SampleSize= length(alternation_rate),
+                        SE= SDalt/sqrt(SampleSize),
+                        lwr= meanalternation-SE,
+                        upr= meanalternation+SE)
+
+# Plots the mean alternation for each difference in rate
+ggplot(VisitRateSum, aes(x=visit_rate_diff_after_rounding, y=meanalternation))+
+  geom_point()+
+  geom_line()+
+  geom_errorbar(aes(ymin=lwr, ymax=upr))+
+  theme_classic()
+
+####################################################################################
+#
+#
 ##### Investigating repeatability of alternation within a brood event
+#
+#
+####################################################################################
+#
+# Below section needs looking at again (as of 24/03) to check right things being used
+#
 
 # Now to create graph where x=age (day of video) y=alternation grouped by pair
 ggplot(Merged, aes(x=Age, y=alternation_rate, colour=BroodRef))+
@@ -185,35 +233,3 @@ summary(mod2)
 # Sample size here has 153 observations where there is non-zero alternation for age 6 and age 10
 # Only covers 2012, 2013, 2014. Lots more data available
 # Repeat this once rest has been distracted and compare results.
-
-# 24/03/2016
-ggplot(Merged, aes(x=visit_rate_difference, y=alternation_rate))+
-  geom_point()+
-  theme_classic()
-
-# Round the visit rates to nearest whole number to get whole number differences
-Merged <- transform(Merged, round_male_visit_rate = round(male_visit_rate))
-Merged <- transform(Merged, round_female_visit_rate = round(female_visit_rate))
-Merged <- transform(Merged, visit_rate_diff_after_rounding = abs(round_male_visit_rate - round_female_visit_rate))
-
-# Scatter plot of all the points 
-ggplot(Merged, aes(x=visit_rate_diff_after_rounding, y=alternation_rate))+
-  geom_point()+
-  theme_classic()
-
-# This will summarise the data by the difference in visit rate, giving mean alternation etc
-# Enables a graph to be plotted with error bars
-VisitRateSum<-summarise(group_by(Merged, visit_rate_diff_after_rounding),
-          meanalternation = mean(alternation_rate),
-          SDalt= sd(alternation_rate),
-          SampleSize= length(alternation_rate),
-          SE= SDalt/sqrt(SampleSize),
-          lwr= meanalternation-SE,
-          upr= meanalternation+SE)
-
-# Plots the mean alternation for each difference in rate
-ggplot(VisitRateSum, aes(x=visit_rate_diff_after_rounding, y=meanalternation))+
-  geom_point()+
-  geom_line()+
-  geom_errorbar(aes(ymin=lwr, ymax=upr))+
-  theme_classic()
