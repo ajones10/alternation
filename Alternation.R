@@ -7,13 +7,13 @@
 
 # Clear R's Brain
 rm(list=ls())
-
+old<- Sys.time() # get start time
 
 # Packages and Reading in Files -------------------------------------------
 
 # Load required libraries
 library(ggplot2)
-library(dplyr)
+library(plyr); library(dplyr)
 library(tidyr)
 library(RODBC)
 library(gridExtra)
@@ -385,3 +385,197 @@ summary(mod6)
 # Output shows that there is still repeatability in alternation
 # F= 17.12, d.f=1,547, p<0.001
 # Rsq = 0.03035
+
+
+# Investigating alternation and pair bond duration ------------------------
+
+# Create dataframe which has PairID, BroodRef, and the alternation rate early(age6/7) and late (age10/11)
+Pairbroods <- select(Merged, BroodRef, PairID)
+Pairbroods <- merge(Pairbroods, CombinedAltAge, "BroodRef")
+Pairbroods <- distinct(Pairbroods)
+
+# Remove pairs that only have one brood
+Pairbroods<- subset(Pairbroods,duplicated(PairID) | duplicated(PairID, fromLast=TRUE))
+
+# Order broods by number rather than a reference
+Pairbroods<- ddply(Pairbroods,.(PairID),transform,BroodNumber = rank(BroodRef,ties.method = "first"))
+
+# Make BroodNumber a factor
+Pairbroods$BroodNumber <- factor(Pairbroods$BroodNumber)
+
+# Graph for early alternation
+alt1plot<-ggplot(Pairbroods, aes(x=BroodNumber, y=alternation1, colour=PairID))+
+  geom_point(size=3)+
+  ylim(0,1)+
+  geom_line(aes(group=PairID), size=1)+
+  guides(color="none")+
+  theme_classic()
+
+# Graph for late alternation
+alt2plot<-ggplot(Pairbroods, aes(x=BroodNumber, y=alternation2, colour=PairID))+
+  geom_point(size=3)+
+  ylim(0,1)+
+  geom_line(aes(group=PairID), size=1)+
+  guides(colour="none")+
+  theme_classic()
+
+# View together
+grid.arrange(alt1plot, alt2plot)
+
+# Remove zero alternation data
+PairbroodsNo0 <- filter(Pairbroods, alternation1>0 & alternation2>0)
+
+# Repeat graphs
+# Graph for early alternation
+alt1No0plot<-ggplot(PairbroodsNo0, aes(x=BroodNumber, y=alternation1, colour=PairID))+
+  geom_point(size=3)+
+  ylim(0,1)+
+  geom_line(aes(group=PairID), size=1)+
+  guides(color="none")+
+  theme_classic()
+
+# Graph for late alternation
+alt2No0plot<-ggplot(PairbroodsNo0, aes(x=BroodNumber, y=alternation2, colour=PairID))+
+  geom_point(size=3)+
+  ylim(0,1)+
+  geom_line(aes(group=PairID), size=1)+
+  guides(colour="none")+
+  theme_classic()
+
+# View together
+grid.arrange(alt1No0plot, alt2No0plot)
+
+
+# Models (not sure necessary or correct) ----------------------------------
+
+
+# Making model for EARLY alternation
+modele1<-lmer(alternation1 ~ BroodNumber + (1 + BroodNumber | PairID), data= PairbroodsNo0)
+
+# Model diagnostics section (adapted from R course Soay Sheep model)
+diagnostics <- fortify(modele1)
+
+# Residuals vs fitted plot:
+pe1<- ggplot(diagnostics, aes(x= .fitted, y= .resid))+
+  geom_point()+
+  geom_hline(yintercept= 0, linetype= "dashed")+
+  theme_classic()
+
+# Q-Q plot
+pe2<-ggplot(diagnostics, aes(sample= .scresid))+
+  stat_qq()+
+  geom_abline()+
+  theme_classic()
+
+# Put them altogether
+grid.arrange(pe1, pe2, ncol=2)
+
+# Testing the model for EARLY alternation
+#### FIXED
+# Is the fixed effect of Brood Number significant?
+modele1<-lmer(alternation1 ~ BroodNumber + (1 + BroodNumber | PairID), data= PairbroodsNo0)
+modele2<-lmer(alternation1 ~               (1 + BroodNumber | PairID), data= PairbroodsNo0)
+anova(modele1, modele2)
+# Yes, p=0.0101
+
+#### RANDOM
+# Is the among pair variation significant?
+modele1<-lmer(alternation1 ~ BroodNumber + (1 + BroodNumber | PairID), data= PairbroodsNo0)
+modele3<-lmer(alternation1 ~ BroodNumber + (1               | PairID), data= PairbroodsNo0)
+anova(modele1, modele3, refit=FALSE) # remember refit=false because random test
+# No, p=0.9877
+
+# Is the correlation term significant?
+modele1<-lmer(alternation1 ~ BroodNumber + (1 + BroodNumber | PairID), data= PairbroodsNo0)
+modele4<-lmer(alternation1 ~ BroodNumber + (1 + BroodNumber || PairID), data= PairbroodsNo0)
+anova(modele1, modele4, refit=FALSE)
+# No, p=0.8751
+
+
+## Now repeat models, for LATE alternation
+
+modell1<-lmer(alternation2 ~ BroodNumber + (1 + BroodNumber | PairID), data= PairbroodsNo0)
+
+# Model diagnostics section (adapted from R course Soay Sheep model)
+diagnostics <- fortify(modell1)
+# Residuals vs fitted plot:
+pl1<- ggplot(diagnostics, aes(x= .fitted, y= .resid))+
+  geom_point()+
+  geom_hline(yintercept= 0, linetype= "dashed")+
+  theme_classic()
+
+# Q-Q plot
+pl2<-ggplot(diagnostics, aes(sample= .scresid))+
+  stat_qq()+
+  geom_abline()+
+  theme_classic()
+
+# Put them altogether
+grid.arrange(pl1, pl2, ncol=2)
+
+# Testing
+#### FIXED
+# Is the fixed effect of Brood Number significant?
+modell1<-lmer(alternation2 ~ BroodNumber + (1 + BroodNumber | PairID), data= PairbroodsNo0)
+modell2<-lmer(alternation2 ~             + (1 + BroodNumber | PairID), data= PairbroodsNo0)
+anova(modell1, modell2)
+# No, p=0.5061
+
+#### RANDOM
+# Is the among pair variation significant?
+modell1<-lmer(alternation2 ~ BroodNumber + (1 + BroodNumber | PairID), data= PairbroodsNo0)
+modell3<-lmer(alternation2 ~ BroodNumber + (1               | PairID), data= PairbroodsNo0)
+anova(modell1, modell3, refit=FALSE) # remember refit=false because random test
+# Yes, p=0.02461
+
+# Is the correlation term significant?
+modell1<-lmer(alternation2 ~ BroodNumber + (1 + BroodNumber | PairID), data= PairbroodsNo0)
+modell4<-lmer(alternation2 ~ BroodNumber + (1 + BroodNumber || PairID), data= PairbroodsNo0)
+anova(modell1, modell4, refit=FALSE)
+# Yes, p=0.006489
+# Time check ------------------------
+# Print elapsed time
+new <- Sys.time() - old
+print(new)
+
+# Testing models ----------------------------------------------------------
+
+# Use Pairbroods
+# Make PairID a factor and BroodNumber a number
+Pairbroods$PairID <- factor(Pairbroods$PairID)
+Pairbroods$BroodNumber <- as.numeric(Pairbroods$BroodNumber)
+# Remove zero alternation data
+PairbroodsNo0 <- filter(Pairbroods, alternation1>0 & alternation2>0)
+
+# This shows how many observations for each number of broods
+n_occur <- data.frame(table(PairbroodsNo0$BroodNumber))
+
+# Need balanced for repeated measures
+# From n_occur can see 57 observations where a pair has 3 broods
+# Try with this to see if theres an effect
+# Filter dataset
+PairB3No0<-PairbroodsNo0[PairbroodsNo0$PairID %in% names(which(table(PairbroodsNo0$PairID) >= 3)), ]
+PairB3No0<-filter(PairB3No0, BroodNumber<=3)
+n_occur2 <- data.frame(table(PairB3No0$BroodNumber))
+PairB3No0<-PairB3No0[PairB3No0$PairID %in% names(which(table(PairB3No0$PairID) == 3)), ]
+# Only 49 obs as not all pairs had data for broodnumber 1 2 AND 3 (because of removal of zeros)
+
+modeltest1<-lmer(alternation1 ~ BroodNumber + (1 | PairID), data= PairB3No0)
+modeltest2<-lmer(alternation1 ~               (1 | PairID), data= PairB3No0)
+anova(modeltest1,modeltest2)
+# Fixed effect of brood number not significant at age6/7 as p=0.7
+
+modeltest3<-lmer(alternation2 ~ BroodNumber + (1 | PairID), data= PairB3No0)
+modeltest4<-lmer(alternation2 ~               (1 | PairID), data= PairB3No0)
+anova(modeltest3,modeltest4)
+# Fixed effect of brood number is significant at age 10/11 as p=0.03582
+# Set margins and visualise the Tukey test
+par(mfrow=c(1,1), mar = c(5,20,4,2)) # Have to set margins in base graphics, ggplot does it for you
+plot(Tukey)
+
+# To reset margins
+par(mar = c(5,4,4,2))
+ggplot(data=PairbroodsNo0, aes(x=BroodNumber, y=alternation1, colour=PairID))+
+  geom_point()+
+  geom_line(aes(group=PairID))+
+  theme_classic()
