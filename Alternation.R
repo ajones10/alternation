@@ -8,12 +8,16 @@
 # Clear R's Brain
 rm(list=ls())
 
+
+# Packages and Reading in Files -------------------------------------------
+
 # Load required libraries
 library(ggplot2)
 library(dplyr)
 library(tidyr)
 library(RODBC)
 library(gridExtra)
+library(lme4)
 
 # Read in the excel file with raw data R_RawFeedingVisits.csv
 # Contains DVDRef TstartFeedVisit TendFeedVisit Sex
@@ -53,6 +57,9 @@ BroodsPerPair <- sqlQuery(conDB, "
 FROM ((tblBroods INNER JOIN tblDVDInfo ON tblBroods.BroodRef = tblDVDInfo.BroodRef) INNER JOIN tblDVD_XlsFiles ON tblDVDInfo.DVDRef = tblDVD_XlsFiles.DVDRef) INNER JOIN tblParentalCare ON (tblDVD_XlsFiles.DVDRef = tblParentalCare.DVDRef) AND (tblDVDInfo.DVDRef = tblParentalCare.DVDRef)
                           WHERE (((tblBroods.SocialMumCertain)=Yes) AND ((tblBroods.SocialDadCertain)=Yes) AND ((tblDVDInfo.Situation)=4));")
 close(conDB) # closes connection to db 
+
+
+# Tidying and Making New Variables --------------------------------------------
 
 ### 30/03
 # There is a duplicate. Two Age6 videos for Brood Ref 1190, so remove VJ0139 which does not match with
@@ -120,6 +127,9 @@ Merged <- transform(Merged, round_male_visit_rate = round(male_visit_rate))
 Merged <- transform(Merged, round_female_visit_rate = round(female_visit_rate))
 Merged <- transform(Merged, visit_rate_diff_after_rounding = abs(round_male_visit_rate - round_female_visit_rate))
 
+
+# Visit Rate Difference ---------------------------------------------------
+
 # Scatter plot of all the points 
 ggplot(Merged, aes(x=visit_rate_diff_after_rounding, y=alternation_rate))+
   geom_point()+
@@ -142,16 +152,8 @@ ggplot(VisitRateSum, aes(x=visit_rate_diff_after_rounding, y=meanalternation))+
   geom_errorbar(aes(ymin=lwr, ymax=upr))+
   theme_classic()
 
-####################################################################################
-#
-#
-##### Investigating repeatability of alternation within a brood event
-#
-#
-####################################################################################
-#
-# Below section needs looking at again (as of 24/03) to check right things being used
-#
+
+# Investigating repeatability of alternation within a brood event ---------
 
 # Now to create graph where x=age (day of video) y=alternation grouped by pair
 ggplot(Merged, aes(x=Age, y=alternation_rate, colour=BroodRef))+
