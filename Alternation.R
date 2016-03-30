@@ -331,3 +331,55 @@ BroodAltAge671011<- select(Merged671011, BroodRef, Age, alternation_rate)
 BroodAltAge671011 <- mutate(BroodAltAge671011, alternation1 = Age==6 | Age==7)
 BroodAltAge671011sp <- spread(BroodAltAge671011, alternation1, alternation_rate)
 BroodAltAge671011sp<- plyr::rename(BroodAltAge671011sp, c("TRUE" = "alternation1", "FALSE" = "alternation2"))
+
+CombinedAltAge <- select(BroodAltAge671011sp, BroodRef, alternation1, alternation2)
+
+alt1 <- select(CombinedAltAge, BroodRef, alternation1)
+alt2 <- select(CombinedAltAge, BroodRef, alternation2)
+
+alt1 <- filter(alt1, !is.na(alternation1))
+alt2 <- filter(alt2, !is.na(alternation2))
+
+CombinedAltAge <- merge(alt1, alt2, "BroodRef")
+
+# Plot
+ggplot(CombinedAltAge, aes(x = alternation1, y = alternation2))+
+  geom_point()+
+  xlim(0,1)+
+  ylim(0,1)+
+  geom_smooth(method=lm, size=1)+
+  theme_classic()
+
+mod5<- lm(alternation2 ~ alternation1, data=CombinedAltAge)
+mod5[1]
+
+par(mfrow=c(2,2)) 
+plot(mod5)
+
+anova(mod5)
+summary(mod5)
+
+# Output shows that there is repeatability in alternation
+# F= 71.63, d.f=1,610, p<0.001
+# Rsq = 0.1051
+
+# Check without zero data
+CombinedAltAgeNo0 <- filter(CombinedAltAge, alternation1>0 & alternation2>0)
+ggplot(CombinedAltAgeNo0, aes(x = alternation1, y = alternation2))+
+  geom_point()+
+  xlim(0,1)+
+  ylim(0,1)+
+  geom_smooth(method=lm, size=1)+
+  theme_classic()
+
+mod6<- lm(alternation2 ~ alternation1, data=CombinedAltAgeNo0)
+mod6[1]
+
+par(mfrow=c(2,2)) 
+plot(mod6)
+
+anova(mod6)
+summary(mod6)
+# Output shows that there is still repeatability in alternation
+# F= 17.12, d.f=1,547, p<0.001
+# Rsq = 0.03035
