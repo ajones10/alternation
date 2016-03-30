@@ -54,6 +54,11 @@ FROM ((tblBroods INNER JOIN tblDVDInfo ON tblBroods.BroodRef = tblDVDInfo.BroodR
                           WHERE (((tblBroods.SocialMumCertain)=Yes) AND ((tblBroods.SocialDadCertain)=Yes) AND ((tblDVDInfo.Situation)=4));")
 close(conDB) # closes connection to db 
 
+### 30/03
+# There is a duplicate. Two Age6 videos for Brood Ref 1190, so remove VJ0139 which does not match with
+# what is in the database.
+BroodsPerPair <- subset(BroodsPerPair, DVDNumber!="VJ0139")
+
 # Merge the alternation summary data with the BroodsPerPair query from the database:
 
 Merged<-merge(Summarydata, BroodsPerPair, "DVDRef") # merging by 'DVDRef'
@@ -195,8 +200,8 @@ summary(mod1)
 ## 
 #
 # Output shows that there is repeatability in alternation
-# F= 6.901, d.f=1,172, p=0.009
-# Rsq = 0.038  - still a very large amount of unexplained variation
+# F= 21.72, d.f=1,356, p<0.001
+# Rsq = 0.0575  - still a very large amount of unexplained variation
 
 #### This next section addresses the right skew in the data
 ### 
@@ -223,12 +228,8 @@ plot(mod2)
 anova(mod2)
 summary(mod2)
 
-## Output this time: F=2.405, d.f=1,151, p=0.123, Rsq=0.0157
+## Output this time: F=3.689, d.f=1,324, p=0.05564, Rsq=0.01126
 # Removing zeros makes data normally distributed
 # No longer any significant repeatability
 # Other factors?
-#
-## 22/03/2016
-# Sample size here has 153 observations where there is non-zero alternation for age 6 and age 10
-# Only covers 2012, 2013, 2014. Lots more data available
-# Repeat this once rest has been distracted and compare results.
+
