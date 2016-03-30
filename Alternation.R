@@ -155,7 +155,9 @@ ggplot(Merged, aes(x=Age, y=alternation_rate, colour=BroodRef))+
   geom_line(aes(group=BroodRef), size=1)+
   theme_classic()
 
-# Can see from this graph nearly every one has day 6 and day 10 so filter dataframe to reflect this
+# Data comes in pairs of Age6 and Age10, or 7 and 11. Do each separately:
+
+# 6 and 10
 
 MergedD6D10 <- filter(Merged, Age == 6 | Age == 10)
 
@@ -233,3 +235,79 @@ summary(mod2)
 # No longer any significant repeatability
 # Other factors?
 
+# 7 and 11
+
+MergedD7D11 <- filter(Merged, Age == 7 | Age == 11)
+
+# need to exclude rows where only one measurement e.g Age 7 only
+MergedD7D11<- subset(MergedD7D11,duplicated(BroodRef) | duplicated(BroodRef, fromLast=TRUE))
+
+# Repeat graph
+ggplot(MergedD7D11, aes(x=Age, y=alternation_rate, colour=BroodRef))+
+  geom_point(size=3)+
+  geom_line(aes(group=BroodRef), size=1)+
+  theme_classic()
+
+####
+# Select() the columns alternation brood ref and age may solve some issues 
+
+BroodAltAge711<- select(MergedD7D11, BroodRef, Age, alternation_rate)
+
+#Spread?
+BroodAltAge711<- spread(BroodAltAge711, Age, alternation_rate)
+
+#Rename age columns
+BroodAltAge711<- plyr::rename(BroodAltAge711, c("7" = "Age7", "11" = "Age11"))
+View(BroodAltAge711)
+
+# Plot
+ggplot(BroodAltAge711, aes(x = Age7, y = Age11))+
+  geom_point()+
+  xlim(0,1)+
+  ylim(0,1)+
+  geom_smooth(method=lm, size=1)+
+  theme_classic()
+
+mod3<- lm(Age11 ~ Age7, data=BroodAltAge711)
+mod3[1]
+
+par(mfrow=c(2,2)) 
+plot(mod3)
+
+anova(mod3)
+summary(mod3)
+
+## 
+#
+# Output shows that there is repeatability in alternation
+# F= 21.72, d.f=1,356, p<0.001
+# Rsq = 0.0575  - still a very large amount of unexplained variation
+
+#### This next section addresses the right skew in the data
+### 
+# Though not sure if necessary? (May change when previous and later years data is added)
+# Could remove all observations where alternation is 0
+
+BroodAltAge711No0 <- filter(BroodAltAge711, Age7>0 & Age11>0)
+
+# Repeat Plot and model like before
+ggplot(BroodAltAge711No0, aes(x = Age7, y = Age11))+
+  geom_point()+
+  xlim(0,1)+
+  ylim(0,1)+
+  geom_smooth(method=lm, size=1)+
+  theme_classic()
+
+mod4<- lm(Age11 ~ Age7, data=BroodAltAge711No0)
+mod4[1]
+
+par(mfrow=c(2,2)) 
+plot(mod4)
+
+anova(mod4)
+summary(mod4)
+
+## Output this time: F=3.689, d.f=1,324, p=0.05564, Rsq=0.01126
+# Removing zeros makes data normally distributed
+# No longer any significant repeatability
+# Other factors?
