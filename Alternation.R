@@ -239,6 +239,11 @@ summary(mod2)
 
 MergedD7D11 <- filter(Merged, Age == 7 | Age == 11)
 
+# Remove what duplicates there are, for now remove the broodref (so both results) CHANGE WHEN SORTED
+MergedD7D11 <- subset(MergedD7D11, BroodRef!="48")
+MergedD7D11 <- subset(MergedD7D11, BroodRef!="53")
+MergedD7D11 <- subset(MergedD7D11, BroodRef!="529")
+
 # need to exclude rows where only one measurement e.g Age 7 only
 MergedD7D11<- subset(MergedD7D11,duplicated(BroodRef) | duplicated(BroodRef, fromLast=TRUE))
 
@@ -280,8 +285,8 @@ summary(mod3)
 ## 
 #
 # Output shows that there is repeatability in alternation
-# F= 21.72, d.f=1,356, p<0.001
-# Rsq = 0.0575  - still a very large amount of unexplained variation
+# F= 47.95, d.f=1,246, p<0.001
+# Rsq = 0.1631  - still a large amount of unexplained variation, but this is much bigger than D6D11
 
 #### This next section addresses the right skew in the data
 ### 
@@ -307,7 +312,8 @@ plot(mod4)
 anova(mod4)
 summary(mod4)
 
-## Output this time: F=3.689, d.f=1,324, p=0.05564, Rsq=0.01126
+## Output this time: F=14.69, d.f=1,216, p=0.0001665, Rsq=0.06366
 # Removing zeros makes data normally distributed
-# No longer any significant repeatability
-# Other factors?
+# Still significant repeatability
+
+# Next need to try doing Alternation 1 as age 6 or 7, and Alternation 2 as age 10 or 11
