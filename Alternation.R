@@ -533,10 +533,7 @@ modell1<-lmer(alternation2 ~ BroodNumber + (1 + BroodNumber | PairID), data= Pai
 modell4<-lmer(alternation2 ~ BroodNumber + (1 + BroodNumber || PairID), data= PairbroodsNo0)
 anova(modell1, modell4, refit=FALSE)
 # Yes, p=0.006489
-# Time check ------------------------
-# Print elapsed time
-new <- Sys.time() - old
-print(new)
+
 
 # Testing models ----------------------------------------------------------
 
@@ -569,13 +566,72 @@ modeltest3<-lmer(alternation2 ~ BroodNumber + (1 | PairID), data= PairB3No0)
 modeltest4<-lmer(alternation2 ~               (1 | PairID), data= PairB3No0)
 anova(modeltest3,modeltest4)
 # Fixed effect of brood number is significant at age 10/11 as p=0.03582
+# Do a Tukey to see what happens
+library(multcomp)
+
+Tukey<-(glht(modeltest3, linfct=mcp(BroodNumber="Tukey")))
 # Set margins and visualise the Tukey test
 par(mfrow=c(1,1), mar = c(5,20,4,2)) # Have to set margins in base graphics, ggplot does it for you
 plot(Tukey)
 
 # To reset margins
 par(mar = c(5,4,4,2))
-ggplot(data=PairbroodsNo0, aes(x=BroodNumber, y=alternation1, colour=PairID))+
+ggplot(data=PairB3No0, aes(x=BroodNumber, y=alternation2, colour=PairID))+
   geom_point()+
   geom_line(aes(group=PairID))+
   theme_classic()
+
+ci<-confint(lmList(alternation2~BroodNumber|PairID, data=PairB3No0), pooled=TRUE)
+plot3<- plot(ci, order=1)
+plot3
+
+# Make model FOR PAIRS THAT HAVE AT LEAST 3 BROODS. ONLY COUNTS FIRST 3 BROODS.
+m1<-lmer(alternation2 ~ BroodNumber + (1 + BroodNumber | PairID ), data=PairB3No0)
+summary(m1)
+diagnostics <- fortify(m1)
+
+# Residuals vs fitted plot:
+p1<- ggplot(diagnostics, aes(x= .fitted, y= .resid))+
+  geom_point()+
+  geom_hline(yintercept= 0, linetype= "dashed")+
+  theme_classic()
+p1
+# Q-Q plot
+p2<-ggplot(diagnostics, aes(sample= .scresid))+
+  stat_qq()+
+  geom_abline()+
+  theme_classic()
+p2
+
+# Is fixed effect of Brood Number important?
+m1<-lmer(alternation2 ~ 1 + BroodNumber + (1 + BroodNumber | PairID ), data=PairB3No0)
+m2<-lmer(alternation2 ~ 1 +               (1 + BroodNumber | PairID ), data=PairB3No0)
+anova(m1,m2)
+# Yes, p=0.0381
+
+# Is the among-pair broodnumber-slope variation significant?
+m1<-lmer(alternation2 ~ 1 + BroodNumber + (1 + BroodNumber | PairID ), data=PairB3No0)
+m3<-lmer(alternation2 ~ 1 + BroodNumber + (1               | PairID ), data=PairB3No0)
+anova(m1,m3, refit=FALSE)
+# No, p=0.5722
+
+# Is the correlation term significant?
+m1<-lmer(alternation2 ~ 1 + BroodNumber + (1 + BroodNumber | PairID ), data=PairB3No0)
+m4<-lmer(alternation2 ~ 1 + BroodNumber + (1 + BroodNumber || PairID ), data=PairB3No0)
+anova(m1,m4, refit=FALSE)
+# No, p=0.2907
+
+ggplot(PairB3No0, aes(x=BroodNumber, y=alternation2))+
+  geom_point()+
+  geom_smooth(method=lm)+
+  theme_classic()
+
+
+
+# Pairwise Comparisons ----------------------------------------------------
+
+
+# Time check ------------------------
+# Print elapsed time
+new <- Sys.time() - old
+print(new)
