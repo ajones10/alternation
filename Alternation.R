@@ -58,6 +58,10 @@ close(conDB) # closes connection to db
 # There is a duplicate. Two Age6 videos for Brood Ref 1190, so remove VJ0139 which does not match with
 # what is in the database.
 BroodsPerPair <- subset(BroodsPerPair, DVDNumber!="VJ0139")
+# Remove what duplicates there are, for now remove the broodref (so both results) CHANGE WHEN SORTED
+BroodsPerPair <- subset(BroodsPerPair, BroodRef!="48")
+BroodsPerPair <- subset(BroodsPerPair, BroodRef!="53")
+BroodsPerPair <- subset(BroodsPerPair, BroodRef!="529")
 
 # Merge the alternation summary data with the BroodsPerPair query from the database:
 
@@ -239,10 +243,6 @@ summary(mod2)
 
 MergedD7D11 <- filter(Merged, Age == 7 | Age == 11)
 
-# Remove what duplicates there are, for now remove the broodref (so both results) CHANGE WHEN SORTED
-MergedD7D11 <- subset(MergedD7D11, BroodRef!="48")
-MergedD7D11 <- subset(MergedD7D11, BroodRef!="53")
-MergedD7D11 <- subset(MergedD7D11, BroodRef!="529")
 
 # need to exclude rows where only one measurement e.g Age 7 only
 MergedD7D11<- subset(MergedD7D11,duplicated(BroodRef) | duplicated(BroodRef, fromLast=TRUE))
@@ -317,3 +317,17 @@ summary(mod4)
 # Still significant repeatability
 
 # Next need to try doing Alternation 1 as age 6 or 7, and Alternation 2 as age 10 or 11
+
+Merged671011 <- filter(Merged, Age == 6 | Age == 10 | Age == 7 | Age == 11)
+
+# need to exclude rows where only one measurement e.g Age 6 only
+Merged671011<- subset(Merged671011,duplicated(BroodRef) | duplicated(BroodRef, fromLast=TRUE))
+
+####
+# Select() the columns alternation brood ref and age may solve some issues 
+
+BroodAltAge671011<- select(Merged671011, BroodRef, Age, alternation_rate)
+
+BroodAltAge671011 <- mutate(BroodAltAge671011, alternation1 = Age==6 | Age==7)
+BroodAltAge671011sp <- spread(BroodAltAge671011, alternation1, alternation_rate)
+BroodAltAge671011sp<- plyr::rename(BroodAltAge671011sp, c("TRUE" = "alternation1", "FALSE" = "alternation2"))
