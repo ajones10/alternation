@@ -476,6 +476,77 @@ A2<-ggplot(pairsumDat, aes(x=BroodNumber, y=meanA2))+
 
 grid.arrange(A1, A2, ncol=1)
 
+alt1mod<- lm(alternation1~BroodNumber, data=Pairbroods)
+
+anova(alt1mod)
+summary(alt1mod)
+
+alt1tukey<-glht(alt1mod,
+            linfct=mcp(BroodNumber = "Tukey"))
+
+summary(alt1tukey)
+
+alt2mod<- lm(alternation2~BroodNumber, data=Pairbroods)
+
+anova(alt2mod)
+summary(alt2mod)
+
+alt2tukey<-glht(alt2mod,
+                linfct=mcp(BroodNumber = "Tukey"))
+
+summary(alt2tukey)
+
+# Test on PairbroodsNo0
+pairno0sumDat<-summarise (group_by(PairbroodsNo0, BroodNumber),
+                       mean1 = mean(alternation1),
+                       mean2 = mean(alternation2),
+                       sd1 = sd(alternation1),
+                       sd2 = sd(alternation2),
+                       sample_size1 = length(alternation1),
+                       sample_size2 = length(alternation2),
+                       lower_bound1 = mean1 - sd1,
+                       lower_bound2 = mean2 - sd2,
+                       upper_bound1 = mean1 + sd1,
+                       upper_bound2 = mean2 + sd2)
+
+limits1<-aes(ymin = lower_bound1, ymax = upper_bound1)
+limits2<-aes(ymin = lower_bound2, ymax = upper_bound2)
+
+A1no0<-ggplot(pairno0sumDat, aes(x=BroodNumber, y=mean1))+
+  geom_bar(stat = "identity")+
+  geom_errorbar(limits1, width = 0.1)+
+  theme_classic()
+
+A2no0<-ggplot(pairno0sumDat, aes(x=BroodNumber, y=mean2))+
+  geom_bar(stat = "identity")+
+  geom_errorbar(limits2, width = 0.1)+
+  theme_classic()
+
+grid.arrange(A1no0, A2no0, ncol=1)
+
+alt1mod2<- lm(alternation1~BroodNumber, data=PairbroodsNo0)
+
+anova(alt1mod2)
+summary(alt1mod2)
+
+alt1tukey2<-glht(alt1mod2,
+                linfct=mcp(BroodNumber = "Tukey"))
+
+summary(alt1tukey2)
+
+alt2mod2<- lm(alternation2~BroodNumber, data=PairbroodsNo0)
+
+anova(alt2mod2)
+summary(alt2mod2)
+
+alt2tukey2<-glht(alt2mod2,
+                linfct=mcp(BroodNumber = "Tukey"))
+
+summary(alt2tukey2)
+
+
+
+
 # Calculate the change in alternation between brood events
 Pairbroods<- Pairbroods %>%
   group_by(PairID)%>%
