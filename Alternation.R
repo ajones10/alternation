@@ -448,6 +448,8 @@ grid.arrange(alt1No0plot, alt2No0plot)
 # Pairwise Comparisons ----------------------------------------------------
 
 # Calculate mean sd etc alternation for each brood event
+# Then make a bar chart for alternation and brood number
+# Anova and tukey
 
 pairsumDat<-summarise (group_by(Pairbroods, BroodNumber),
                        meanA1 = mean(alternation1),
@@ -496,7 +498,7 @@ alt2tukey<-glht(alt2mod,
 
 summary(alt2tukey)
 
-# Test on PairbroodsNo0
+# Repeat on PairbroodsNo0 (removes zero alternation)
 pairno0sumDat<-summarise (group_by(PairbroodsNo0, BroodNumber),
                        mean1 = mean(alternation1),
                        mean2 = mean(alternation2),
@@ -544,9 +546,9 @@ alt2tukey2<-glht(alt2mod2,
 
 summary(alt2tukey2)
 
-
-
-
+#
+#
+#
 # Calculate the change in alternation between brood events
 Pairbroods<- Pairbroods %>%
   group_by(PairID)%>%
