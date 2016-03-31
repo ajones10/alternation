@@ -629,7 +629,36 @@ ggplot(PairB3No0, aes(x=BroodNumber, y=alternation2))+
 
 # Pairwise Comparisons ----------------------------------------------------
 
-# Need to calculate the change in alternation between brood events
+# Calculate mean sd etc alternation for each brood event
+
+pairsumDat<-summarise (group_by(Pairbroods, BroodNumber),
+                            meanA1 = mean(alternation1),
+                            meanA2 = mean(alternation2),
+                            sdA1 = sd(alternation1),
+                            sdA2 = sd(alternation2),
+                            sample_sizeA1 = length(alternation1),
+                            sample_sizeA2 = length(alternation2),
+                            lower_boundA1 = meanA1 - sdA1,
+                            lower_boundA2 = meanA2 - sdA2,
+                            upper_boundA1 = meanA1 + sdA1,
+                            upper_boundA2 = meanA2 + sdA2)
+                            
+limitsA1<-aes(ymin = lower_boundA1, ymax = upper_boundA1)
+limitsA2<-aes(ymin = lower_boundA2, ymax = upper_boundA2)
+
+A1<-ggplot(pairsumDat, aes(x=BroodNumber, y=meanA1))+
+  geom_bar(stat = "identity")+
+  geom_errorbar(limitsA1, width = 0.1)+
+  theme_classic()
+
+A2<-ggplot(pairsumDat, aes(x=BroodNumber, y=meanA2))+
+  geom_bar(stat = "identity")+
+  geom_errorbar(limitsA2, width = 0.1)+
+  theme_classic()
+
+grid.arrange(A1, A2, ncol=1)
+
+# Calculate the change in alternation between brood events
 Pairbroods<- Pairbroods %>%
   group_by(PairID)%>%
   mutate(alt1difffrom1 = alternation1-first(alternation1))%>%
@@ -641,7 +670,7 @@ ggplot(Pairbroods, aes(x=BroodNumber, y=alt1difffrom1))+
   geom_point()+
   theme_classic()
 
-pairsumDat<-summarise (group_by(Pairbroods, BroodNumber),
+pairsumDatdiffs<-summarise (group_by(Pairbroods, BroodNumber),
                    meanA1D1 = mean(alt1difffrom1),
                    meanA2D1 = mean(alt2difffrom1),
                    meanA1DL = mean(alt1difffromlast),
@@ -668,24 +697,24 @@ limitsA2D1<-aes(ymin = lower_boundA2D1, ymax = upper_boundA2D1)
 limitsA1DL<-aes(ymin = lower_boundA1DL, ymax = upper_boundA1DL)
 limitsA2DL<-aes(ymin = lower_boundA2DL, ymax = upper_boundA2DL)
 
-pairsumDat$BroodNumber <- factor(pairsumDat$BroodNumber)
+pairsumDatdiffs$BroodNumber <- factor(pairsumDatdiffs$BroodNumber)
 
-A1D1<-ggplot(pairsumDat, aes(x=BroodNumber, y=meanA1D1))+
+A1D1<-ggplot(pairsumDatdiffs, aes(x=BroodNumber, y=meanA1D1))+
   geom_bar(stat = "identity", aes(fill=BroodNumber))+
   geom_errorbar(limitsA1D1, width = 0.1)+
   theme_classic()
 
-A2D1<-ggplot(pairsumDat, aes(x=BroodNumber, y=meanA2D1))+
+A2D1<-ggplot(pairsumDatdiffs, aes(x=BroodNumber, y=meanA2D1))+
   geom_bar(stat = "identity", aes(fill=BroodNumber))+
   geom_errorbar(limitsA2D1, width = 0.1)+
   theme_classic()
 
-A1DL<-ggplot(pairsumDat, aes(x=BroodNumber, y=meanA1DL))+
+A1DL<-ggplot(pairsumDatdiffs, aes(x=BroodNumber, y=meanA1DL))+
   geom_bar(stat = "identity", aes(fill=BroodNumber))+
   geom_errorbar(limitsA1DL, width = 0.1)+
   theme_classic()
 
-A2DL<-ggplot(pairsumDat, aes(x=BroodNumber, y=meanA2DL))+
+A2DL<-ggplot(pairsumDatdiffs, aes(x=BroodNumber, y=meanA2DL))+
   geom_bar(stat = "identity", aes(fill=BroodNumber))+
   geom_errorbar(limitsA2DL, width = 0.1)+
   theme_classic()
