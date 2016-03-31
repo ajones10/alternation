@@ -18,6 +18,7 @@ library(tidyr)
 library(RODBC)
 library(gridExtra)
 library(lme4)
+library(nlme)
 
 # Read in the excel file with raw data R_RawFeedingVisits.csv
 # Contains DVDRef TstartFeedVisit TendFeedVisit Sex
@@ -62,13 +63,12 @@ close(conDB) # closes connection to db
 # Tidying and Making New Variables --------------------------------------------
 
 ### 30/03
-# There is a duplicate. Two Age6 videos for Brood Ref 1190, so remove VJ0139 which does not match with
-# what is in the database.
-BroodsPerPair <- subset(BroodsPerPair, DVDNumber!="VJ0139")
+# Remove VJ0141 as mix up with videos on hard drive/excels/database (NOTE-changed from deleting VJ0139 on 31/03)
+BroodsPerPair <- subset(BroodsPerPair, DVDNumber!="VJ0141")
 # Remove what duplicates there are, for now remove the broodref (so both results) CHANGE WHEN SORTED
 BroodsPerPair <- subset(BroodsPerPair, BroodRef!="48")
-BroodsPerPair <- subset(BroodsPerPair, BroodRef!="53")
-BroodsPerPair <- subset(BroodsPerPair, BroodRef!="529")
+BroodsPerPair <- subset(BroodsPerPair, DVDNumber!="50195") #added 31/03
+BroodsPerPair <- subset(BroodsPerPair, DVDNumber!="40256") #added 31/03
 
 # Merge the alternation summary data with the BroodsPerPair query from the database:
 
@@ -627,10 +627,25 @@ ggplot(PairB3No0, aes(x=BroodNumber, y=alternation2))+
   theme_classic()
 
 
-
 # Pairwise Comparisons ----------------------------------------------------
 
+aov1=aov(alternation2 ~ BroodNumber + Error(PairID/BroodNumber), data=PairB3No0)
+summary(aov1)
 
+# Make BroodNumber a factor
+PairB3No0$BroodNumber <- factor(PairB3No0$BroodNumber)
+lme1<- lme(alternation2 ~ BroodNumber, random= ~1 | PairID/BroodNumber, data=PairB3No0)
+summary(lme1)
+summary(glht(lme1, linfct=mcp(BroodNumber="Tukey")))
+
+#Try it on whole (unbalanced) data
+Pairbroods$BroodNumber <- factor(Pairbroods$BroodNumber)
+lme2<- lme(alternation2 ~ BroodNumber, random= ~1 | PairID/BroodNumber, data=Pairbroods)
+summary(lme2)
+summary(glht(lme2, linfct=mcp(BroodNumber="Tukey")))
+
+Pairbroods$BroodNumber <- as.numeric(Pairbroods$BroodNumber)
+mo<-lmer(alternation2 ~ BroodNumber + (1 | PairID/BroodNumber ), data=Pairbroods)
 # Time check ------------------------
 # Print elapsed time
 new <- Sys.time() - old
