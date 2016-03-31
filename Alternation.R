@@ -534,6 +534,9 @@ modell4<-lmer(alternation2 ~ BroodNumber + (1 + BroodNumber || PairID), data= Pa
 anova(modell1, modell4, refit=FALSE)
 # Yes, p=0.006489
 
+PairbroodsNo0$BroodNumber <- factor(PairbroodsNo0$BroodNumber)
+PairbroodsNo0$PairID <- factor(PairbroodsNo0$PairID)
+modell10<-lmer(alternation2 ~ BroodNumber + (1 + BroodNumber | BroodNumber/PairID), data= PairbroodsNo0)
 
 # Testing models ----------------------------------------------------------
 
