@@ -534,9 +534,6 @@ modell4<-lmer(alternation2 ~ BroodNumber + (1 + BroodNumber || PairID), data= Pa
 anova(modell1, modell4, refit=FALSE)
 # Yes, p=0.006489
 
-PairbroodsNo0$BroodNumber <- factor(PairbroodsNo0$BroodNumber)
-PairbroodsNo0$PairID <- factor(PairbroodsNo0$PairID)
-modell10<-lmer(alternation2 ~ BroodNumber + (1 + BroodNumber | BroodNumber/PairID), data= PairbroodsNo0)
 
 # Testing models ----------------------------------------------------------
 
@@ -632,23 +629,70 @@ ggplot(PairB3No0, aes(x=BroodNumber, y=alternation2))+
 
 # Pairwise Comparisons ----------------------------------------------------
 
-aov1=aov(alternation2 ~ BroodNumber + Error(PairID/BroodNumber), data=PairB3No0)
-summary(aov1)
+# Need to calculate the change in alternation between brood events
+Pairbroods<- Pairbroods %>%
+  group_by(PairID)%>%
+  mutate(alt1difffrom1 = alternation1-first(alternation1))%>%
+  mutate(alt2difffrom1 = alternation2-first(alternation2))%>%
+  mutate(alt1difffromlast = c(0,diff(alternation1)))%>%
+  mutate(alt2difffromlast = c(0,diff(alternation2)))
 
-# Make BroodNumber a factor
-PairB3No0$BroodNumber <- factor(PairB3No0$BroodNumber)
-lme1<- lme(alternation2 ~ BroodNumber, random= ~1 | PairID/BroodNumber, data=PairB3No0)
-summary(lme1)
-summary(glht(lme1, linfct=mcp(BroodNumber="Tukey")))
+ggplot(Pairbroods, aes(x=BroodNumber, y=alt1difffrom1))+
+  geom_point()+
+  theme_classic()
 
-#Try it on whole (unbalanced) data
-Pairbroods$BroodNumber <- factor(Pairbroods$BroodNumber)
-lme2<- lme(alternation2 ~ BroodNumber, random= ~1 | PairID/BroodNumber, data=Pairbroods)
-summary(lme2)
-summary(glht(lme2, linfct=mcp(BroodNumber="Tukey")))
+pairsumDat<-summarise (group_by(Pairbroods, BroodNumber),
+                   meanA1D1 = mean(alt1difffrom1),
+                   meanA2D1 = mean(alt2difffrom1),
+                   meanA1DL = mean(alt1difffromlast),
+                   meanA2DL = mean(alt2difffromlast),
+                   sdA1D1 = sd(alt1difffrom1),
+                   sdA2D1 = sd(alt2difffrom1),
+                   sdA1DL = sd(alt1difffromlast),
+                   sdA2DL = sd(alt2difffromlast),
+                   sample_sizeA1D1 = length(alt1difffrom1),
+                   sample_sizeA2D1 = length(alt1difffrom1),
+                   sample_sizeA1DL = length(alt1difffrom1),
+                   sample_sizeA2DL = length(alt1difffrom1),
+                   lower_boundA1D1 = meanA1D1 - sdA1D1,
+                   lower_boundA2D1 = meanA2D1 - sdA2D1,
+                   lower_boundA1DL = meanA1DL - sdA1DL,
+                   lower_boundA2DL = meanA2DL - sdA2DL,
+                   upper_boundA1D1 = meanA1D1 + sdA1D1,
+                   upper_boundA2D1 = meanA2D1 + sdA2D1,
+                   upper_boundA1DL = meanA1DL + sdA1DL,
+                   upper_boundA2DL = meanA2DL + sdA2DL)
 
-Pairbroods$BroodNumber <- as.numeric(Pairbroods$BroodNumber)
-mo<-lmer(alternation2 ~ BroodNumber + (1 | PairID/BroodNumber ), data=Pairbroods)
+limitsA1D1<-aes(ymin = lower_boundA1D1, ymax = upper_boundA1D1)
+limitsA2D1<-aes(ymin = lower_boundA2D1, ymax = upper_boundA2D1)
+limitsA1DL<-aes(ymin = lower_boundA1DL, ymax = upper_boundA1DL)
+limitsA2DL<-aes(ymin = lower_boundA2DL, ymax = upper_boundA2DL)
+
+pairsumDat$BroodNumber <- factor(pairsumDat$BroodNumber)
+
+A1D1<-ggplot(pairsumDat, aes(x=BroodNumber, y=meanA1D1))+
+  geom_bar(stat = "identity", aes(fill=BroodNumber))+
+  geom_errorbar(limitsA1D1, width = 0.1)+
+  theme_classic()
+
+A2D1<-ggplot(pairsumDat, aes(x=BroodNumber, y=meanA2D1))+
+  geom_bar(stat = "identity", aes(fill=BroodNumber))+
+  geom_errorbar(limitsA2D1, width = 0.1)+
+  theme_classic()
+
+A1DL<-ggplot(pairsumDat, aes(x=BroodNumber, y=meanA1DL))+
+  geom_bar(stat = "identity", aes(fill=BroodNumber))+
+  geom_errorbar(limitsA1DL, width = 0.1)+
+  theme_classic()
+
+A2DL<-ggplot(pairsumDat, aes(x=BroodNumber, y=meanA2DL))+
+  geom_bar(stat = "identity", aes(fill=BroodNumber))+
+  geom_errorbar(limitsA2DL, width = 0.1)+
+  theme_classic()
+
+grid.arrange(A1D1, A2D1, A1DL, A2DL, ncol=2)
+
+         
 # Time check ------------------------
 # Print elapsed time
 new <- Sys.time() - old
