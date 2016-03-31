@@ -1,10 +1,7 @@
-##########
 # Andrew Jones
 # 
 # Alternation project script
 #
-##########
-
 # Clear R's Brain
 rm(list=ls())
 old<- Sys.time() # get start time
@@ -58,7 +55,7 @@ BroodsPerPair <- sqlQuery(conDB, "
 FROM ((tblBroods INNER JOIN tblDVDInfo ON tblBroods.BroodRef = tblDVDInfo.BroodRef) INNER JOIN tblDVD_XlsFiles ON tblDVDInfo.DVDRef = tblDVD_XlsFiles.DVDRef) INNER JOIN tblParentalCare ON (tblDVD_XlsFiles.DVDRef = tblParentalCare.DVDRef) AND (tblDVDInfo.DVDRef = tblParentalCare.DVDRef)
                           WHERE (((tblBroods.SocialMumCertain)=Yes) AND ((tblBroods.SocialDadCertain)=Yes) AND ((tblDVDInfo.Situation)=4));")
 close(conDB) # closes connection to db 
-
+# This installs necessary packages and gets raw files and query from db 
 
 # Tidying and Making New Variables --------------------------------------------
 
@@ -126,7 +123,7 @@ ggplot(Merged, aes(x=visit_rate_difference, y=alternation_rate))+
 Merged <- transform(Merged, round_male_visit_rate = round(male_visit_rate))
 Merged <- transform(Merged, round_female_visit_rate = round(female_visit_rate))
 Merged <- transform(Merged, visit_rate_diff_after_rounding = abs(round_male_visit_rate - round_female_visit_rate))
-
+# Makes some new variables for alternation etc
 
 # Visit Rate Difference ---------------------------------------------------
 
@@ -151,7 +148,8 @@ ggplot(VisitRateSum, aes(x=visit_rate_diff_after_rounding, y=meanalternation))+
   geom_line()+
   geom_errorbar(aes(ymin=lwr, ymax=upr))+
   theme_classic()
-
+# This section calculates the difference between parents' visit rates and investigates how this
+# affects alternation
 
 # Investigating repeatability of alternation within a brood event ---------
 
@@ -385,7 +383,8 @@ summary(mod6)
 # Output shows that there is still repeatability in alternation
 # F= 17.12, d.f=1,547, p<0.001
 # Rsq = 0.03035
-
+# This takes early (age 6 or 7) and late (age 10 or 11) alternation and sees if they are repeatable
+# within a brood event for a pair
 
 # Investigating alternation and pair bond duration ------------------------
 
@@ -444,8 +443,111 @@ alt2No0plot<-ggplot(PairbroodsNo0, aes(x=BroodNumber, y=alternation2, colour=Pai
 
 # View together
 grid.arrange(alt1No0plot, alt2No0plot)
+# Looks at how alternation changes with brood number
+
+# Pairwise Comparisons ----------------------------------------------------
+
+# Calculate mean sd etc alternation for each brood event
+
+pairsumDat<-summarise (group_by(Pairbroods, BroodNumber),
+                       meanA1 = mean(alternation1),
+                       meanA2 = mean(alternation2),
+                       sdA1 = sd(alternation1),
+                       sdA2 = sd(alternation2),
+                       sample_sizeA1 = length(alternation1),
+                       sample_sizeA2 = length(alternation2),
+                       lower_boundA1 = meanA1 - sdA1,
+                       lower_boundA2 = meanA2 - sdA2,
+                       upper_boundA1 = meanA1 + sdA1,
+                       upper_boundA2 = meanA2 + sdA2)
+
+limitsA1<-aes(ymin = lower_boundA1, ymax = upper_boundA1)
+limitsA2<-aes(ymin = lower_boundA2, ymax = upper_boundA2)
+
+A1<-ggplot(pairsumDat, aes(x=BroodNumber, y=meanA1))+
+  geom_bar(stat = "identity")+
+  geom_errorbar(limitsA1, width = 0.1)+
+  theme_classic()
+
+A2<-ggplot(pairsumDat, aes(x=BroodNumber, y=meanA2))+
+  geom_bar(stat = "identity")+
+  geom_errorbar(limitsA2, width = 0.1)+
+  theme_classic()
+
+grid.arrange(A1, A2, ncol=1)
+
+# Calculate the change in alternation between brood events
+Pairbroods<- Pairbroods %>%
+  group_by(PairID)%>%
+  mutate(alt1difffrom1 = alternation1-first(alternation1))%>%
+  mutate(alt2difffrom1 = alternation2-first(alternation2))%>%
+  mutate(alt1difffromlast = c(0,diff(alternation1)))%>%
+  mutate(alt2difffromlast = c(0,diff(alternation2)))
+
+ggplot(Pairbroods, aes(x=BroodNumber, y=alt1difffrom1))+
+  geom_point()+
+  theme_classic()
+
+pairsumDatdiffs<-summarise (group_by(Pairbroods, BroodNumber),
+                            meanA1D1 = mean(alt1difffrom1),
+                            meanA2D1 = mean(alt2difffrom1),
+                            meanA1DL = mean(alt1difffromlast),
+                            meanA2DL = mean(alt2difffromlast),
+                            sdA1D1 = sd(alt1difffrom1),
+                            sdA2D1 = sd(alt2difffrom1),
+                            sdA1DL = sd(alt1difffromlast),
+                            sdA2DL = sd(alt2difffromlast),
+                            sample_sizeA1D1 = length(alt1difffrom1),
+                            sample_sizeA2D1 = length(alt1difffrom1),
+                            sample_sizeA1DL = length(alt1difffrom1),
+                            sample_sizeA2DL = length(alt1difffrom1),
+                            lower_boundA1D1 = meanA1D1 - sdA1D1,
+                            lower_boundA2D1 = meanA2D1 - sdA2D1,
+                            lower_boundA1DL = meanA1DL - sdA1DL,
+                            lower_boundA2DL = meanA2DL - sdA2DL,
+                            upper_boundA1D1 = meanA1D1 + sdA1D1,
+                            upper_boundA2D1 = meanA2D1 + sdA2D1,
+                            upper_boundA1DL = meanA1DL + sdA1DL,
+                            upper_boundA2DL = meanA2DL + sdA2DL)
+
+limitsA1D1<-aes(ymin = lower_boundA1D1, ymax = upper_boundA1D1)
+limitsA2D1<-aes(ymin = lower_boundA2D1, ymax = upper_boundA2D1)
+limitsA1DL<-aes(ymin = lower_boundA1DL, ymax = upper_boundA1DL)
+limitsA2DL<-aes(ymin = lower_boundA2DL, ymax = upper_boundA2DL)
+
+pairsumDatdiffs$BroodNumber <- factor(pairsumDatdiffs$BroodNumber)
+
+A1D1<-ggplot(pairsumDatdiffs, aes(x=BroodNumber, y=meanA1D1))+
+  geom_bar(stat = "identity", aes(fill=BroodNumber))+
+  geom_errorbar(limitsA1D1, width = 0.1)+
+  theme_classic()
+
+A2D1<-ggplot(pairsumDatdiffs, aes(x=BroodNumber, y=meanA2D1))+
+  geom_bar(stat = "identity", aes(fill=BroodNumber))+
+  geom_errorbar(limitsA2D1, width = 0.1)+
+  theme_classic()
+
+A1DL<-ggplot(pairsumDatdiffs, aes(x=BroodNumber, y=meanA1DL))+
+  geom_bar(stat = "identity", aes(fill=BroodNumber))+
+  geom_errorbar(limitsA1DL, width = 0.1)+
+  theme_classic()
+
+A2DL<-ggplot(pairsumDatdiffs, aes(x=BroodNumber, y=meanA2DL))+
+  geom_bar(stat = "identity", aes(fill=BroodNumber))+
+  geom_errorbar(limitsA2DL, width = 0.1)+
+  theme_classic()
+
+grid.arrange(A1D1, A2D1, A1DL, A2DL, ncol=2)
+# Continues work from previous section and makes bar charts
+
+# Time check ------------------------
+# Print elapsed time
+new <- Sys.time() - old
+print(new)
 
 
+#- The below sections are just models I have made. Unsure if correct or if I will need/use them
+#- No point running code below here
 # Models (not sure necessary or correct) ----------------------------------
 
 
@@ -533,7 +635,6 @@ modell1<-lmer(alternation2 ~ BroodNumber + (1 + BroodNumber | PairID), data= Pai
 modell4<-lmer(alternation2 ~ BroodNumber + (1 + BroodNumber || PairID), data= PairbroodsNo0)
 anova(modell1, modell4, refit=FALSE)
 # Yes, p=0.006489
-
 
 # Testing models ----------------------------------------------------------
 
@@ -626,103 +727,3 @@ ggplot(PairB3No0, aes(x=BroodNumber, y=alternation2))+
   geom_smooth(method=lm)+
   theme_classic()
 
-
-# Pairwise Comparisons ----------------------------------------------------
-
-# Calculate mean sd etc alternation for each brood event
-
-pairsumDat<-summarise (group_by(Pairbroods, BroodNumber),
-                            meanA1 = mean(alternation1),
-                            meanA2 = mean(alternation2),
-                            sdA1 = sd(alternation1),
-                            sdA2 = sd(alternation2),
-                            sample_sizeA1 = length(alternation1),
-                            sample_sizeA2 = length(alternation2),
-                            lower_boundA1 = meanA1 - sdA1,
-                            lower_boundA2 = meanA2 - sdA2,
-                            upper_boundA1 = meanA1 + sdA1,
-                            upper_boundA2 = meanA2 + sdA2)
-                            
-limitsA1<-aes(ymin = lower_boundA1, ymax = upper_boundA1)
-limitsA2<-aes(ymin = lower_boundA2, ymax = upper_boundA2)
-
-A1<-ggplot(pairsumDat, aes(x=BroodNumber, y=meanA1))+
-  geom_bar(stat = "identity")+
-  geom_errorbar(limitsA1, width = 0.1)+
-  theme_classic()
-
-A2<-ggplot(pairsumDat, aes(x=BroodNumber, y=meanA2))+
-  geom_bar(stat = "identity")+
-  geom_errorbar(limitsA2, width = 0.1)+
-  theme_classic()
-
-grid.arrange(A1, A2, ncol=1)
-
-# Calculate the change in alternation between brood events
-Pairbroods<- Pairbroods %>%
-  group_by(PairID)%>%
-  mutate(alt1difffrom1 = alternation1-first(alternation1))%>%
-  mutate(alt2difffrom1 = alternation2-first(alternation2))%>%
-  mutate(alt1difffromlast = c(0,diff(alternation1)))%>%
-  mutate(alt2difffromlast = c(0,diff(alternation2)))
-
-ggplot(Pairbroods, aes(x=BroodNumber, y=alt1difffrom1))+
-  geom_point()+
-  theme_classic()
-
-pairsumDatdiffs<-summarise (group_by(Pairbroods, BroodNumber),
-                   meanA1D1 = mean(alt1difffrom1),
-                   meanA2D1 = mean(alt2difffrom1),
-                   meanA1DL = mean(alt1difffromlast),
-                   meanA2DL = mean(alt2difffromlast),
-                   sdA1D1 = sd(alt1difffrom1),
-                   sdA2D1 = sd(alt2difffrom1),
-                   sdA1DL = sd(alt1difffromlast),
-                   sdA2DL = sd(alt2difffromlast),
-                   sample_sizeA1D1 = length(alt1difffrom1),
-                   sample_sizeA2D1 = length(alt1difffrom1),
-                   sample_sizeA1DL = length(alt1difffrom1),
-                   sample_sizeA2DL = length(alt1difffrom1),
-                   lower_boundA1D1 = meanA1D1 - sdA1D1,
-                   lower_boundA2D1 = meanA2D1 - sdA2D1,
-                   lower_boundA1DL = meanA1DL - sdA1DL,
-                   lower_boundA2DL = meanA2DL - sdA2DL,
-                   upper_boundA1D1 = meanA1D1 + sdA1D1,
-                   upper_boundA2D1 = meanA2D1 + sdA2D1,
-                   upper_boundA1DL = meanA1DL + sdA1DL,
-                   upper_boundA2DL = meanA2DL + sdA2DL)
-
-limitsA1D1<-aes(ymin = lower_boundA1D1, ymax = upper_boundA1D1)
-limitsA2D1<-aes(ymin = lower_boundA2D1, ymax = upper_boundA2D1)
-limitsA1DL<-aes(ymin = lower_boundA1DL, ymax = upper_boundA1DL)
-limitsA2DL<-aes(ymin = lower_boundA2DL, ymax = upper_boundA2DL)
-
-pairsumDatdiffs$BroodNumber <- factor(pairsumDatdiffs$BroodNumber)
-
-A1D1<-ggplot(pairsumDatdiffs, aes(x=BroodNumber, y=meanA1D1))+
-  geom_bar(stat = "identity", aes(fill=BroodNumber))+
-  geom_errorbar(limitsA1D1, width = 0.1)+
-  theme_classic()
-
-A2D1<-ggplot(pairsumDatdiffs, aes(x=BroodNumber, y=meanA2D1))+
-  geom_bar(stat = "identity", aes(fill=BroodNumber))+
-  geom_errorbar(limitsA2D1, width = 0.1)+
-  theme_classic()
-
-A1DL<-ggplot(pairsumDatdiffs, aes(x=BroodNumber, y=meanA1DL))+
-  geom_bar(stat = "identity", aes(fill=BroodNumber))+
-  geom_errorbar(limitsA1DL, width = 0.1)+
-  theme_classic()
-
-A2DL<-ggplot(pairsumDatdiffs, aes(x=BroodNumber, y=meanA2DL))+
-  geom_bar(stat = "identity", aes(fill=BroodNumber))+
-  geom_errorbar(limitsA2DL, width = 0.1)+
-  theme_classic()
-
-grid.arrange(A1D1, A2D1, A1DL, A2DL, ncol=2)
-
-         
-# Time check ------------------------
-# Print elapsed time
-new <- Sys.time() - old
-print(new)
