@@ -32,7 +32,8 @@ Summarydata<-summarise(by_pair,
                        malecount = length(Sex[Sex==1]),
                        femalecount = length(Sex[Sex==0]),
                        number_alternations= sum(diff(Sex)!=0),
-                       alternation_rate= number_alternations/count)
+                       alternation_rate= (number_alternations/count),
+                       alternationpercent= (alternation_rate*100))
 
 # Plots the alternation rates as a histogram
 ggplot(Summarydata, aes(x=alternation_rate))+
@@ -48,7 +49,7 @@ ggplot(Summarydata, aes(x=alternation_rate))+
 # Provisioning videos at days 6, 7, 10, 11 only for consistency
 
 ## Get BroodsPerPairUpdated query from database
-conDB= odbcConnectAccess("C:\\Users\\Andrew Jones\\Documents\\University\\Level 4\\Project\\Database Copy\\Database0.74_20160310_MI\\SparrowData.mdb")
+conDB= odbcConnectAccess("C:\\Users\\Andrew Jones\\Documents\\University\\Level 4\\Project\\Database Copy\\Database0.74_20160322_MI\\SparrowData.mdb")
 
 BroodsPerPair <- sqlQuery(conDB, "
                           SELECT tblBroods.SocialMumID, tblBroods.SocialDadID, tblBroods.SocialMumCertain, tblBroods.SocialDadCertain, tblBroods.BroodRef, tblDVDInfo.Situation, tblDVDInfo.DVDRef, tblDVDInfo.DVDNumber, tblDVD_XlsFiles.Filename, tblDVDInfo.Age, tblDVDInfo.DVDdate, tblDVDInfo.DVDtime, tblDVDInfo.OffspringNo, tblParentalCare.EffectTime
@@ -128,6 +129,10 @@ Merged <- transform(Merged, visit_rate_diff_after_rounding = abs(round_male_visi
 Merged<-Merged %>%
   group_by(PairID) %>%
   mutate(BroodNumber = match(BroodRef, unique(BroodRef)))
+
+# This changes the DVDtime to be in decimal hour format e.g 07:45 = 7.75, 12:30 = 12.5
+Merged$DVDtime<-as.numeric(format(Merged$DVDtime, "%H")) +
+  +     as.numeric(format(Merged$DVDtime, "%M"))/60
 
 # Makes some new variables for alternation etc
 
@@ -632,7 +637,7 @@ grid.arrange(A1D1, A2D1, A1DL, A2DL, ncol=2)
 # Models that include lots of things! -------------------------------------
 
 
-fullmod<-lmer(alternation_rate ~ 1 + BroodNumber + Age + OffspringNo + visit_rate_diff_after_rounding + (1 | PairID) + (1 | BroodRef), data=Merged)
+fullmod<-lmer(alternation_rate ~ 1 + BroodNumber + Age + DVDtime + OffspringNo + visit_rate_diff_after_rounding + (1 | PairID) + (1 | BroodRef), data=Merged)
 summary(fullmod)
 
 diagnosticsfullmod <- fortify(fullmod)
@@ -658,7 +663,8 @@ MergedNo0 <- filter(Merged, alternation_rate>0)
 # Removing zeros removed 115 observations, leaving 1521
 # Rerun model above with new dataset
 
-fullmodNo0<-lmer(alternation_rate ~ 1 + BroodNumber + Age + OffspringNo + visit_rate_diff_after_rounding + (1 | PairID) + (1 | BroodRef), data=MergedNo0)
+fullmodNo0<-lmer(alternationpercent ~ 1 + BroodNumber + Age + OffspringNo + DVDtime +
+                   visit_rate_diff_after_rounding + (1 | PairID) + (1 | BroodRef), data=MergedNo0)
 summary(fullmodNo0)
 
 diagnosticsfullmodNo0 <- fortify(fullmodNo0)
@@ -676,30 +682,42 @@ p2fullmodNo0<-ggplot(diagnosticsfullmodNo0, aes(sample= .scresid))+
   theme_classic()
 p2fullmodNo0
 
-# Results for both show that random effects variation is very close to zero
-# Not sure what this means?
-# Read somewhere online that means random effects not really having affect (not sure if true)
-# Repeat as normal model
-fulllm1<-lm(alternation_rate ~ BroodNumber + Age + OffspringNo + visit_rate_diff_after_rounding, data=MergedNo0)
-anova(fulllm1)
-summary(fulllm1)
 
-# Compare with the zero-included data
-fulllm2<-lm(alternation_rate ~ BroodNumber + Age + OffspringNo + visit_rate_diff_after_rounding, data=Merged)
-anova(fulllm2)
-summary(fulllm2)
-
-# Go back to the full mixed models
 # Testing fixed effects
 # Brood Number
-fullmodNo0<-lmer(alternation_rate ~ 1 + BroodNumber + Age + OffspringNo + visit_rate_diff_after_rounding + (1 | PairID) + (1 | BroodRef), data=MergedNo0)
-fullmodNo0.2<-lmer(alternation_rate ~ 1 +             Age + OffspringNo + visit_rate_diff_after_rounding + (1 | PairID) + (1 | BroodRef), data=MergedNo0)
-anova(fullmodNo0, fullmodNo0.2)
+fullmodNo0<-lmer(alternationpercent ~ 1 + BroodNumber + Age + OffspringNo + DVDtime +
+                   visit_rate_diff_after_rounding + (1 | PairID) + (1 | BroodRef), data=MergedNo0)
+fullmodNo0bn<-lmer(alternationpercent ~ 1 +             Age + OffspringNo + DVDtime +
+                   visit_rate_diff_after_rounding + (1 | PairID) + (1 | BroodRef), data=MergedNo0)
+anova(fullmodNo0, fullmodNo0bn)
+
+# Age
+fullmodNo0<-lmer(alternationpercent ~ 1 + BroodNumber + Age + OffspringNo + DVDtime +
+                   visit_rate_diff_after_rounding + (1 | PairID) + (1 | BroodRef), data=MergedNo0)
+fullmodNo0age<-lmer(alternationpercent ~ 1 + BroodNumber +    OffspringNo + DVDtime +
+                   visit_rate_diff_after_rounding + (1 | PairID) + (1 | BroodRef), data=MergedNo0)
+anova(fullmodNo0, fullmodNo0age)
+
+# OffspringNo
+fullmodNo0<-lmer(alternationpercent ~ 1 + BroodNumber + Age + OffspringNo + DVDtime +
+                   visit_rate_diff_after_rounding + (1 | PairID) + (1 | BroodRef), data=MergedNo0)
+fullmodNo0offspringno<-lmer(alternationpercent ~ 1 + BroodNumber + Age +    DVDtime +
+                   visit_rate_diff_after_rounding + (1 | PairID) + (1 | BroodRef), data=MergedNo0)
+anova(fullmodNo0, fullmodNo0offspringno)
+
+# DVD Time
+fullmodNo0<-lmer(alternationpercent ~ 1 + BroodNumber + Age + OffspringNo + DVDtime +
+                   visit_rate_diff_after_rounding + (1 | PairID) + (1 | BroodRef), data=MergedNo0)
+fullmodNo0DVDTime<-lmer(alternationpercent ~ 1 + BroodNumber + Age + OffspringNo + 
+                   visit_rate_diff_after_rounding + (1 | PairID) + (1 | BroodRef), data=MergedNo0)
+anova(fullmodNo0, fullmodNo0DVDTime)
 
 # Visit Rate Difference
-fullmodNo0<-lmer(alternation_rate ~ 1 + BroodNumber + Age + OffspringNo + visit_rate_diff_after_rounding + (1 | PairID) + (1 | BroodRef), data=MergedNo0)
-fullmodNo0.3<-lmer(alternation_rate ~ 1 + BroodNumber + Age + OffspringNo + (1 | PairID) + (1 | BroodRef), data=MergedNo0)
-anova(fullmodNo0, fullmodNo0.3)
+fullmodNo0<-lmer(alternationpercent ~ 1 + BroodNumber + Age + OffspringNo + DVDtime +
+                   visit_rate_diff_after_rounding + (1 | PairID) + (1 | BroodRef), data=MergedNo0)
+fullmodNo0vrd<-lmer(alternationpercent ~ 1 + BroodNumber + Age + OffspringNo + DVDtime +
+                                                    (1 | PairID) + (1 | BroodRef), data=MergedNo0)
+anova(fullmodNo0, fullmodNo0vrd)
 # Time check ------------------------
 # Print elapsed time
 new <- Sys.time() - old
