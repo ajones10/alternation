@@ -25,6 +25,8 @@ Fullprovisioning <- read.csv("C:\\Users\\Andrew Jones\\Documents\\University\\Le
 # Group data by video file (grouping by nestbox)
 by_pair <-group_by(Fullprovisioning, DVDRef)
 
+
+
 # For each pair calculates the number of visits (count), the number of alternations, and the
 # alternation rate.
 Summarydata<-summarise(by_pair,
@@ -167,6 +169,34 @@ ggplot(VisitRateSum, aes(x=visit_rate_diff_after_rounding, y=meanalternation))+
   theme_classic()
 # This section calculates the difference between parents' visit rates and investigates how this
 # affects alternation
+
+
+# Interfeed Intervals -----------------------------------------------------
+# Calculate interfeed intervals
+males<-filter(by_pair, Sex==1)
+females<-filter(by_pair, Sex==0)
+
+males<-males %>%
+  group_by(DVDRef) %>%
+  mutate(interfeed_interval = c(0,diff(TstartFeedVisit)))
+
+females<-females %>%
+  group_by(DVDRef) %>%
+  mutate(interfeed_interval = c(0,diff(TstartFeedVisit)))
+
+
+females<-left_join(females, Merged, by="DVDRef")
+males<-left_join(males, Merged, by="DVDRef")
+
+mfinterfeed<-bind_rows(females,males)
+mfinterfeed<-group_by(mfinterfeed, DVDRef)
+mfinterfeed<- select(mfinterfeed, Sex, interfeed_interval, round_male_visit_rate, round_female_visit_rate, DVDRef, BroodRef, PairID)
+
+maleinterfeed<-filter(mfinterfeed, Sex == 1)
+maleinterfeed<-select(maleinterfeed, -round_female_visit_rate)
+
+femaleinterfeed<-filter(mfinterfeed, Sex == 0)
+femaleinterfeed<-select(femaleinterfeed, -round_male_visit_rate)
 
 # Investigating repeatability of alternation within a brood event ---------
 
