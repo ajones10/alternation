@@ -650,6 +650,56 @@ p2fullmod<-ggplot(diagnosticsfullmod, aes(sample= .scresid))+
   theme_classic()
 p2fullmod
 
+# Can see from Resid vs Fitted plot that there is a diagonal line 
+# possibly due to the zero alternation data
+# Try removing those and see what happens
+
+MergedNo0 <- filter(Merged, alternation_rate>0)
+# Removing zeros removed 115 observations, leaving 1521
+# Rerun model above with new dataset
+
+fullmodNo0<-lmer(alternation_rate ~ 1 + BroodNumber + Age + OffspringNo + visit_rate_diff_after_rounding + (1 | PairID) + (1 | BroodRef), data=MergedNo0)
+summary(fullmodNo0)
+
+diagnosticsfullmodNo0 <- fortify(fullmodNo0)
+
+# Residuals vs fitted plot:
+p1fullmodNo0<- ggplot(diagnosticsfullmodNo0, aes(x= .fitted, y= .resid))+
+  geom_point()+
+  geom_hline(yintercept= 0, linetype= "dashed")+
+  theme_classic()
+p1fullmodNo0
+# Q-Q plot
+p2fullmodNo0<-ggplot(diagnosticsfullmodNo0, aes(sample= .scresid))+
+  stat_qq()+
+  geom_abline()+
+  theme_classic()
+p2fullmodNo0
+
+# Results for both show that random effects variation is very close to zero
+# Not sure what this means?
+# Read somewhere online that means random effects not really having affect (not sure if true)
+# Repeat as normal model
+fulllm1<-lm(alternation_rate ~ BroodNumber + Age + OffspringNo + visit_rate_diff_after_rounding, data=MergedNo0)
+anova(fulllm1)
+summary(fulllm1)
+
+# Compare with the zero-included data
+fulllm2<-lm(alternation_rate ~ BroodNumber + Age + OffspringNo + visit_rate_diff_after_rounding, data=Merged)
+anova(fulllm2)
+summary(fulllm2)
+
+# Go back to the full mixed models
+# Testing fixed effects
+# Brood Number
+fullmodNo0<-lmer(alternation_rate ~ 1 + BroodNumber + Age + OffspringNo + visit_rate_diff_after_rounding + (1 | PairID) + (1 | BroodRef), data=MergedNo0)
+fullmodNo0.2<-lmer(alternation_rate ~ 1 +             Age + OffspringNo + visit_rate_diff_after_rounding + (1 | PairID) + (1 | BroodRef), data=MergedNo0)
+anova(fullmodNo0, fullmodNo0.2)
+
+# Visit Rate Difference
+fullmodNo0<-lmer(alternation_rate ~ 1 + BroodNumber + Age + OffspringNo + visit_rate_diff_after_rounding + (1 | PairID) + (1 | BroodRef), data=MergedNo0)
+fullmodNo0.3<-lmer(alternation_rate ~ 1 + BroodNumber + Age + OffspringNo + (1 | PairID) + (1 | BroodRef), data=MergedNo0)
+anova(fullmodNo0, fullmodNo0.3)
 # Time check ------------------------
 # Print elapsed time
 new <- Sys.time() - old
