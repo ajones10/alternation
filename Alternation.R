@@ -706,11 +706,13 @@ fullmodNo0offspringno<-lmer(alternationpercent ~ 1 + BroodNumber + Age +    DVDt
 anova(fullmodNo0, fullmodNo0offspringno)
 
 # DVD Time
-fullmodNo0<-lmer(alternationpercent ~ 1 + BroodNumber + Age + OffspringNo + DVDtime +
-                   visit_rate_diff_after_rounding + (1 | PairID) + (1 | BroodRef), data=MergedNo0)
+# Because of missing DVDtimes need to make a subset to test this one
+MergedNo0Dvdtime <- filter(MergedNo0, !is.na(DVDtime))
+fullmodNo0DVDTimefull<-lmer(alternationpercent ~ 1 + BroodNumber + Age + OffspringNo + DVDtime +
+                   visit_rate_diff_after_rounding + (1 | PairID) + (1 | BroodRef), data=MergedNo0Dvdtime)
 fullmodNo0DVDTime<-lmer(alternationpercent ~ 1 + BroodNumber + Age + OffspringNo + 
-                   visit_rate_diff_after_rounding + (1 | PairID) + (1 | BroodRef), data=MergedNo0)
-anova(fullmodNo0, fullmodNo0DVDTime)
+                   visit_rate_diff_after_rounding + (1 | PairID) + (1 | BroodRef), data=MergedNo0Dvdtime)
+anova(fullmodNo0DVDTimefull, fullmodNo0DVDTime)
 
 # Visit Rate Difference
 fullmodNo0<-lmer(alternationpercent ~ 1 + BroodNumber + Age + OffspringNo + DVDtime +
