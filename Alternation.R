@@ -123,6 +123,12 @@ ggplot(Merged, aes(x=visit_rate_difference, y=alternation_rate))+
 Merged <- transform(Merged, round_male_visit_rate = round(male_visit_rate))
 Merged <- transform(Merged, round_female_visit_rate = round(female_visit_rate))
 Merged <- transform(Merged, visit_rate_diff_after_rounding = abs(round_male_visit_rate - round_female_visit_rate))
+
+# Calculates the Brood Number
+Merged<-Merged %>%
+  group_by(PairID) %>%
+  mutate(BroodNumber = match(BroodRef, unique(BroodRef)))
+
 # Makes some new variables for alternation etc
 
 # Visit Rate Difference ---------------------------------------------------
@@ -130,6 +136,9 @@ Merged <- transform(Merged, visit_rate_diff_after_rounding = abs(round_male_visi
 # Scatter plot of all the points 
 ggplot(Merged, aes(x=visit_rate_diff_after_rounding, y=alternation_rate))+
   geom_point()+
+  ylim(0,1)+
+  xlab("Visit rate difference")+
+  ylab("Alternation rate")+
   theme_classic()
 
 # This will summarise the data by the difference in visit rate, giving mean alternation etc
@@ -147,6 +156,9 @@ ggplot(VisitRateSum, aes(x=visit_rate_diff_after_rounding, y=meanalternation))+
   geom_point()+
   geom_line()+
   geom_errorbar(aes(ymin=lwr, ymax=upr))+
+  xlab("Visit rate difference")+
+  ylab("Mean alternation")+
+  ylim(0,0.8)+
   theme_classic()
 # This section calculates the difference between parents' visit rates and investigates how this
 # affects alternation
@@ -347,6 +359,8 @@ ggplot(CombinedAltAge, aes(x = alternation1, y = alternation2))+
   geom_point()+
   xlim(0,1)+
   ylim(0,1)+
+  xlab("Alternation score for age 6/7")+
+  ylab("Alternation score for age 10/11")+
   geom_smooth(method=lm, size=1)+
   theme_classic()
 
@@ -498,6 +512,7 @@ alt2tukey<-glht(alt2mod,
 
 summary(alt2tukey)
 
+
 # Repeat on PairbroodsNo0 (removes zero alternation)
 pairno0sumDat<-summarise (group_by(PairbroodsNo0, BroodNumber),
                        mean1 = mean(alternation1),
@@ -612,12 +627,34 @@ A2DL<-ggplot(pairsumDatdiffs, aes(x=BroodNumber, y=meanA2DL))+
 
 grid.arrange(A1D1, A2D1, A1DL, A2DL, ncol=2)
 # Continues work from previous section and makes bar charts
+# This looks at 
 
 # Time check ------------------------
 # Print elapsed time
 new <- Sys.time() - old
 print(new)
 
+
+# Models that include lots of things! -------------------------------------
+
+
+fullmod<-lmer(alternation_rate ~ 1 + BroodNumber + Age + OffspringNo + visit_rate_diff_after_rounding + (1 | PairID) + (1 | BroodRef), data=Merged)
+summary(fullmod)
+
+diagnosticsfullmod <- fortify(fullmod)
+
+# Residuals vs fitted plot:
+p1fullmod<- ggplot(diagnosticsfullmod, aes(x= .fitted, y= .resid))+
+  geom_point()+
+  geom_hline(yintercept= 0, linetype= "dashed")+
+  theme_classic()
+p1fullmod
+# Q-Q plot
+p2fullmod<-ggplot(diagnosticsfullmod, aes(sample= .scresid))+
+  stat_qq()+
+  geom_abline()+
+  theme_classic()
+p2fullmod
 
 #- The below sections are just models I have made. Unsure if correct or if I will need/use them
 #- No point running code below here
@@ -799,4 +836,3 @@ ggplot(PairB3No0, aes(x=BroodNumber, y=alternation2))+
   geom_point()+
   geom_smooth(method=lm)+
   theme_classic()
-
