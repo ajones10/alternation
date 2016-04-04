@@ -463,27 +463,493 @@ SimulatedMales<-bind_rows(list(SimMale3, SimMale4, SimMale5, SimMale6, SimMale7,
 SimulatedFemales<-bind_rows(list(SimFemale3, SimFemale4, SimFemale5, SimFemale6, SimFemale7, SimFemale8, SimFemale9, SimFemale10, SimFemale11, SimFemale12, SimFemale13, SimFemale14))
 
 # Select necessary rows and rename
-SimulatedMales<- rename(SimulatedMales, VisitRate = round_male_visit_rate)
+SimulatedMales<- rename(SimulatedMales, MaleVisitRate = round_male_visit_rate)
 SimulatedMales<- rename(SimulatedMales, SimID = SimMale)
 SimulatedMales<- rename(SimulatedMales, Interval = MaleCumulative)
-SimulatedMales<- select(SimulatedMales, SimID, Sex, VisitRate, Interval)
+SimulatedMales<- select(SimulatedMales, SimID, Sex, MaleVisitRate, Interval)
 
-SimulatedFemales<- rename(SimulatedFemales, VisitRate = round_female_visit_rate)
+SimulatedFemales<- rename(SimulatedFemales, FemaleVisitRate = round_female_visit_rate)
 SimulatedFemales<- rename(SimulatedFemales, SimID = SimFemale)
 SimulatedFemales<- rename(SimulatedFemales, Interval = FemCumulative)
-SimulatedFemales<- select(SimulatedFemales, SimID, Sex, VisitRate, Interval)
+SimulatedFemales<- select(SimulatedFemales, SimID, Sex, FemaleVisitRate, Interval)
 
 SimulatedData<- bind_rows(list(SimulatedMales, SimulatedFemales))
-# This orders/arranges df by visit rate, then by SimID, then by interval
-SimulatedData<-SimulatedData%>%
-  group_by(VisitRate, SimID)%>%
-  arrange(Interval)
+SimulatedData$MaleVisitRate<- ifelse(is.na(SimulatedData$MaleVisitRate), 0, SimulatedData$MaleVisitRate)
+SimulatedData$FemaleVisitRate<- ifelse(is.na(SimulatedData$FemaleVisitRate), 0, SimulatedData$FemaleVisitRate)
+SimulatedData<- mutate(SimulatedData, VisitDifference=abs(MaleVisitRate-FemaleVisitRate))
+
+M3F3<-SimulatedData%>%
+  filter(MaleVisitRate==3 | FemaleVisitRate==3)%>%
+  arrange(SimID, Interval) 
+M3F4<-SimulatedData%>%
+  filter(MaleVisitRate==3 | FemaleVisitRate==4)%>%
+  arrange(SimID, Interval) 
+M3F5<-SimulatedData%>%
+  filter(MaleVisitRate==3 | FemaleVisitRate==5)%>%
+  arrange(SimID, Interval) 
+M3F6<-SimulatedData%>%
+  filter(MaleVisitRate==3 | FemaleVisitRate==6)%>%
+  arrange(SimID, Interval) 
+M3F7<-SimulatedData%>%
+  filter(MaleVisitRate==3 | FemaleVisitRate==7)%>%
+  arrange(SimID, Interval) 
+M3F8<-SimulatedData%>%
+  filter(MaleVisitRate==3 | FemaleVisitRate==8)%>%
+  arrange(SimID, Interval) 
+M3F9<-SimulatedData%>%
+  filter(MaleVisitRate==3 | FemaleVisitRate==9)%>%
+  arrange(SimID, Interval) 
+M3F10<-SimulatedData%>%
+  filter(MaleVisitRate==3 | FemaleVisitRate==10)%>%
+  arrange(SimID, Interval) 
+M3F11<-SimulatedData%>%
+  filter(MaleVisitRate==3 | FemaleVisitRate==11)%>%
+  arrange(SimID, Interval) 
+M3F12<-SimulatedData%>%
+  filter(MaleVisitRate==3 | FemaleVisitRate==12)%>%
+  arrange(SimID, Interval) 
+M3F13<-SimulatedData%>%
+  filter(MaleVisitRate==3 | FemaleVisitRate==13)%>%
+  arrange(SimID, Interval) 
+M3F14<-SimulatedData%>%
+  filter(MaleVisitRate==3 | FemaleVisitRate==14)%>%
+  arrange(SimID, Interval) 
+M4F3<-SimulatedData%>%
+  filter(MaleVisitRate==4 | FemaleVisitRate==3)%>%
+  arrange(SimID, Interval) 
+M4F4<-SimulatedData%>%
+  filter(MaleVisitRate==4 | FemaleVisitRate==4)%>%
+  arrange(SimID, Interval) 
+M4F5<-SimulatedData%>%
+  filter(MaleVisitRate==4 | FemaleVisitRate==5)%>%
+  arrange(SimID, Interval) 
+M4F6<-SimulatedData%>%
+  filter(MaleVisitRate==4 | FemaleVisitRate==6)%>%
+  arrange(SimID, Interval) 
+M4F7<-SimulatedData%>%
+  filter(MaleVisitRate==4 | FemaleVisitRate==7)%>%
+  arrange(SimID, Interval) 
+M4F8<-SimulatedData%>%
+  filter(MaleVisitRate==4 | FemaleVisitRate==8)%>%
+  arrange(SimID, Interval) 
+M4F9<-SimulatedData%>%
+  filter(MaleVisitRate==4 | FemaleVisitRate==9)%>%
+  arrange(SimID, Interval) 
+M4F10<-SimulatedData%>%
+  filter(MaleVisitRate==4 | FemaleVisitRate==10)%>%
+  arrange(SimID, Interval) 
+M4F11<-SimulatedData%>%
+  filter(MaleVisitRate==4 | FemaleVisitRate==11)%>%
+  arrange(SimID, Interval) 
+M4F12<-SimulatedData%>%
+  filter(MaleVisitRate==4 | FemaleVisitRate==12)%>%
+  arrange(SimID, Interval) 
+M4F13<-SimulatedData%>%
+  filter(MaleVisitRate==4 | FemaleVisitRate==13)%>%
+  arrange(SimID, Interval) 
+M4F14<-SimulatedData%>%
+  filter(MaleVisitRate==4 | FemaleVisitRate==14)%>%
+  arrange(SimID, Interval) 
+M5F3<-SimulatedData%>%
+  filter(MaleVisitRate==5 | FemaleVisitRate==3)%>%
+  arrange(SimID, Interval) 
+M5F4<-SimulatedData%>%
+  filter(MaleVisitRate==5 | FemaleVisitRate==4)%>%
+  arrange(SimID, Interval) 
+M5F5<-SimulatedData%>%
+  filter(MaleVisitRate==5 | FemaleVisitRate==5)%>%
+  arrange(SimID, Interval) 
+M5F6<-SimulatedData%>%
+  filter(MaleVisitRate==5 | FemaleVisitRate==6)%>%
+  arrange(SimID, Interval) 
+M5F7<-SimulatedData%>%
+  filter(MaleVisitRate==5 | FemaleVisitRate==7)%>%
+  arrange(SimID, Interval) 
+M5F8<-SimulatedData%>%
+  filter(MaleVisitRate==5 | FemaleVisitRate==8)%>%
+  arrange(SimID, Interval) 
+M5F9<-SimulatedData%>%
+  filter(MaleVisitRate==5 | FemaleVisitRate==9)%>%
+  arrange(SimID, Interval) 
+M5F10<-SimulatedData%>%
+  filter(MaleVisitRate==5 | FemaleVisitRate==10)%>%
+  arrange(SimID, Interval) 
+M5F11<-SimulatedData%>%
+  filter(MaleVisitRate==5 | FemaleVisitRate==11)%>%
+  arrange(SimID, Interval) 
+M5F12<-SimulatedData%>%
+  filter(MaleVisitRate==5 | FemaleVisitRate==12)%>%
+  arrange(SimID, Interval) 
+M5F13<-SimulatedData%>%
+  filter(MaleVisitRate==5 | FemaleVisitRate==13)%>%
+  arrange(SimID, Interval) 
+M5F14<-SimulatedData%>%
+  filter(MaleVisitRate==5 | FemaleVisitRate==14)%>%
+  arrange(SimID, Interval) 
+M6F3<-SimulatedData%>%
+  filter(MaleVisitRate==6 | FemaleVisitRate==3)%>%
+  arrange(SimID, Interval) 
+M6F4<-SimulatedData%>%
+  filter(MaleVisitRate==6 | FemaleVisitRate==4)%>%
+  arrange(SimID, Interval) 
+M6F5<-SimulatedData%>%
+  filter(MaleVisitRate==6 | FemaleVisitRate==5)%>%
+  arrange(SimID, Interval) 
+M6F6<-SimulatedData%>%
+  filter(MaleVisitRate==6 | FemaleVisitRate==6)%>%
+  arrange(SimID, Interval) 
+M6F7<-SimulatedData%>%
+  filter(MaleVisitRate==6 | FemaleVisitRate==7)%>%
+  arrange(SimID, Interval) 
+M6F8<-SimulatedData%>%
+  filter(MaleVisitRate==6 | FemaleVisitRate==8)%>%
+  arrange(SimID, Interval) 
+M6F9<-SimulatedData%>%
+  filter(MaleVisitRate==6 | FemaleVisitRate==9)%>%
+  arrange(SimID, Interval) 
+M6F10<-SimulatedData%>%
+  filter(MaleVisitRate==6 | FemaleVisitRate==10)%>%
+  arrange(SimID, Interval) 
+M6F11<-SimulatedData%>%
+  filter(MaleVisitRate==6 | FemaleVisitRate==11)%>%
+  arrange(SimID, Interval) 
+M6F12<-SimulatedData%>%
+  filter(MaleVisitRate==6 | FemaleVisitRate==12)%>%
+  arrange(SimID, Interval) 
+M6F13<-SimulatedData%>%
+  filter(MaleVisitRate==6 | FemaleVisitRate==13)%>%
+  arrange(SimID, Interval) 
+M6F14<-SimulatedData%>%
+  filter(MaleVisitRate==6 | FemaleVisitRate==14)%>%
+  arrange(SimID, Interval) 
+M7F3<-SimulatedData%>%
+  filter(MaleVisitRate==7 | FemaleVisitRate==3)%>%
+  arrange(SimID, Interval) 
+M7F4<-SimulatedData%>%
+  filter(MaleVisitRate==7 | FemaleVisitRate==4)%>%
+  arrange(SimID, Interval) 
+M7F5<-SimulatedData%>%
+  filter(MaleVisitRate==7 | FemaleVisitRate==5)%>%
+  arrange(SimID, Interval) 
+M7F6<-SimulatedData%>%
+  filter(MaleVisitRate==7 | FemaleVisitRate==6)%>%
+  arrange(SimID, Interval) 
+M7F7<-SimulatedData%>%
+  filter(MaleVisitRate==7 | FemaleVisitRate==7)%>%
+  arrange(SimID, Interval) 
+M7F8<-SimulatedData%>%
+  filter(MaleVisitRate==7 | FemaleVisitRate==8)%>%
+  arrange(SimID, Interval) 
+M7F9<-SimulatedData%>%
+  filter(MaleVisitRate==7 | FemaleVisitRate==9)%>%
+  arrange(SimID, Interval) 
+M7F10<-SimulatedData%>%
+  filter(MaleVisitRate==7 | FemaleVisitRate==10)%>%
+  arrange(SimID, Interval) 
+M7F11<-SimulatedData%>%
+  filter(MaleVisitRate==7 | FemaleVisitRate==11)%>%
+  arrange(SimID, Interval) 
+M7F12<-SimulatedData%>%
+  filter(MaleVisitRate==7 | FemaleVisitRate==12)%>%
+  arrange(SimID, Interval) 
+M7F13<-SimulatedData%>%
+  filter(MaleVisitRate==7 | FemaleVisitRate==13)%>%
+  arrange(SimID, Interval) 
+M7F14<-SimulatedData%>%
+  filter(MaleVisitRate==7 | FemaleVisitRate==14)%>%
+  arrange(SimID, Interval) 
+M8F3<-SimulatedData%>%
+  filter(MaleVisitRate==8 | FemaleVisitRate==3)%>%
+  arrange(SimID, Interval) 
+M8F4<-SimulatedData%>%
+  filter(MaleVisitRate==8 | FemaleVisitRate==4)%>%
+  arrange(SimID, Interval) 
+M8F5<-SimulatedData%>%
+  filter(MaleVisitRate==8 | FemaleVisitRate==5)%>%
+  arrange(SimID, Interval) 
+M8F6<-SimulatedData%>%
+  filter(MaleVisitRate==8 | FemaleVisitRate==6)%>%
+  arrange(SimID, Interval) 
+M8F7<-SimulatedData%>%
+  filter(MaleVisitRate==8 | FemaleVisitRate==7)%>%
+  arrange(SimID, Interval) 
+M8F8<-SimulatedData%>%
+  filter(MaleVisitRate==8 | FemaleVisitRate==8)%>%
+  arrange(SimID, Interval) 
+M8F9<-SimulatedData%>%
+  filter(MaleVisitRate==8 | FemaleVisitRate==9)%>%
+  arrange(SimID, Interval) 
+M8F10<-SimulatedData%>%
+  filter(MaleVisitRate==8 | FemaleVisitRate==10)%>%
+  arrange(SimID, Interval) 
+M8F11<-SimulatedData%>%
+  filter(MaleVisitRate==8 | FemaleVisitRate==11)%>%
+  arrange(SimID, Interval) 
+M8F12<-SimulatedData%>%
+  filter(MaleVisitRate==8 | FemaleVisitRate==12)%>%
+  arrange(SimID, Interval) 
+M8F13<-SimulatedData%>%
+  filter(MaleVisitRate==8 | FemaleVisitRate==13)%>%
+  arrange(SimID, Interval) 
+M8F14<-SimulatedData%>%
+  filter(MaleVisitRate==8 | FemaleVisitRate==14)%>%
+  arrange(SimID, Interval) 
+M9F3<-SimulatedData%>%
+  filter(MaleVisitRate==9 | FemaleVisitRate==3)%>%
+  arrange(SimID, Interval) 
+M9F4<-SimulatedData%>%
+  filter(MaleVisitRate==9 | FemaleVisitRate==4)%>%
+  arrange(SimID, Interval) 
+M9F5<-SimulatedData%>%
+  filter(MaleVisitRate==9 | FemaleVisitRate==5)%>%
+  arrange(SimID, Interval) 
+M9F6<-SimulatedData%>%
+  filter(MaleVisitRate==9 | FemaleVisitRate==6)%>%
+  arrange(SimID, Interval) 
+M9F7<-SimulatedData%>%
+  filter(MaleVisitRate==9 | FemaleVisitRate==7)%>%
+  arrange(SimID, Interval) 
+M9F8<-SimulatedData%>%
+  filter(MaleVisitRate==9 | FemaleVisitRate==8)%>%
+  arrange(SimID, Interval) 
+M9F9<-SimulatedData%>%
+  filter(MaleVisitRate==9 | FemaleVisitRate==9)%>%
+  arrange(SimID, Interval) 
+M9F10<-SimulatedData%>%
+  filter(MaleVisitRate==9 | FemaleVisitRate==10)%>%
+  arrange(SimID, Interval) 
+M9F11<-SimulatedData%>%
+  filter(MaleVisitRate==9 | FemaleVisitRate==11)%>%
+  arrange(SimID, Interval) 
+M9F12<-SimulatedData%>%
+  filter(MaleVisitRate==9 | FemaleVisitRate==12)%>%
+  arrange(SimID, Interval) 
+M9F13<-SimulatedData%>%
+  filter(MaleVisitRate==9 | FemaleVisitRate==13)%>%
+  arrange(SimID, Interval) 
+M9F14<-SimulatedData%>%
+  filter(MaleVisitRate==9 | FemaleVisitRate==14)%>%
+  arrange(SimID, Interval) 
+M10F3<-SimulatedData%>%
+  filter(MaleVisitRate==10 | FemaleVisitRate==3)%>%
+  arrange(SimID, Interval) 
+M10F4<-SimulatedData%>%
+  filter(MaleVisitRate==10| FemaleVisitRate==4)%>%
+  arrange(SimID, Interval) 
+M10F5<-SimulatedData%>%
+  filter(MaleVisitRate==10 | FemaleVisitRate==5)%>%
+  arrange(SimID, Interval) 
+M10F6<-SimulatedData%>%
+  filter(MaleVisitRate==10 | FemaleVisitRate==6)%>%
+  arrange(SimID, Interval) 
+M10F7<-SimulatedData%>%
+  filter(MaleVisitRate==10 | FemaleVisitRate==7)%>%
+  arrange(SimID, Interval) 
+M10F8<-SimulatedData%>%
+  filter(MaleVisitRate==10 | FemaleVisitRate==8)%>%
+  arrange(SimID, Interval) 
+M10F9<-SimulatedData%>%
+  filter(MaleVisitRate==10 | FemaleVisitRate==9)%>%
+  arrange(SimID, Interval) 
+M10F10<-SimulatedData%>%
+  filter(MaleVisitRate==10 | FemaleVisitRate==10)%>%
+  arrange(SimID, Interval) 
+M10F11<-SimulatedData%>%
+  filter(MaleVisitRate==10 | FemaleVisitRate==11)%>%
+  arrange(SimID, Interval) 
+M10F12<-SimulatedData%>%
+  filter(MaleVisitRate==10 | FemaleVisitRate==12)%>%
+  arrange(SimID, Interval) 
+M10F13<-SimulatedData%>%
+  filter(MaleVisitRate==10 | FemaleVisitRate==13)%>%
+  arrange(SimID, Interval) 
+M10F14<-SimulatedData%>%
+  filter(MaleVisitRate==10 | FemaleVisitRate==14)%>%
+  arrange(SimID, Interval)
+M11F3<-SimulatedData%>%
+  filter(MaleVisitRate==11 | FemaleVisitRate==3)%>%
+  arrange(SimID, Interval) 
+M11F4<-SimulatedData%>%
+  filter(MaleVisitRate==11 | FemaleVisitRate==4)%>%
+  arrange(SimID, Interval) 
+M11F5<-SimulatedData%>%
+  filter(MaleVisitRate==11 | FemaleVisitRate==5)%>%
+  arrange(SimID, Interval) 
+M11F6<-SimulatedData%>%
+  filter(MaleVisitRate==11 | FemaleVisitRate==6)%>%
+  arrange(SimID, Interval) 
+M11F7<-SimulatedData%>%
+  filter(MaleVisitRate==11 | FemaleVisitRate==7)%>%
+  arrange(SimID, Interval) 
+M11F8<-SimulatedData%>%
+  filter(MaleVisitRate==11 | FemaleVisitRate==8)%>%
+  arrange(SimID, Interval) 
+M11F9<-SimulatedData%>%
+  filter(MaleVisitRate==11 | FemaleVisitRate==9)%>%
+  arrange(SimID, Interval) 
+M11F10<-SimulatedData%>%
+  filter(MaleVisitRate==11 | FemaleVisitRate==10)%>%
+  arrange(SimID, Interval) 
+M11F11<-SimulatedData%>%
+  filter(MaleVisitRate==11 | FemaleVisitRate==11)%>%
+  arrange(SimID, Interval) 
+M11F12<-SimulatedData%>%
+  filter(MaleVisitRate==11 | FemaleVisitRate==12)%>%
+  arrange(SimID, Interval) 
+M11F13<-SimulatedData%>%
+  filter(MaleVisitRate==11 | FemaleVisitRate==13)%>%
+  arrange(SimID, Interval) 
+M11F14<-SimulatedData%>%
+  filter(MaleVisitRate==11 | FemaleVisitRate==14)%>%
+  arrange(SimID, Interval)
+M12F3<-SimulatedData%>%
+  filter(MaleVisitRate==12 | FemaleVisitRate==3)%>%
+  arrange(SimID, Interval) 
+M12F4<-SimulatedData%>%
+  filter(MaleVisitRate==12 | FemaleVisitRate==4)%>%
+  arrange(SimID, Interval) 
+M12F5<-SimulatedData%>%
+  filter(MaleVisitRate==12 | FemaleVisitRate==5)%>%
+  arrange(SimID, Interval) 
+M12F6<-SimulatedData%>%
+  filter(MaleVisitRate==12 | FemaleVisitRate==6)%>%
+  arrange(SimID, Interval) 
+M12F7<-SimulatedData%>%
+  filter(MaleVisitRate==12 | FemaleVisitRate==7)%>%
+  arrange(SimID, Interval) 
+M12F8<-SimulatedData%>%
+  filter(MaleVisitRate==12 | FemaleVisitRate==8)%>%
+  arrange(SimID, Interval) 
+M12F9<-SimulatedData%>%
+  filter(MaleVisitRate==12 | FemaleVisitRate==9)%>%
+  arrange(SimID, Interval) 
+M12F10<-SimulatedData%>%
+  filter(MaleVisitRate==12 | FemaleVisitRate==10)%>%
+  arrange(SimID, Interval) 
+M12F11<-SimulatedData%>%
+  filter(MaleVisitRate==12 | FemaleVisitRate==11)%>%
+  arrange(SimID, Interval) 
+M12F12<-SimulatedData%>%
+  filter(MaleVisitRate==12 | FemaleVisitRate==12)%>%
+  arrange(SimID, Interval) 
+M12F13<-SimulatedData%>%
+  filter(MaleVisitRate==12 | FemaleVisitRate==13)%>%
+  arrange(SimID, Interval) 
+M12F14<-SimulatedData%>%
+  filter(MaleVisitRate==12 | FemaleVisitRate==14)%>%
+  arrange(SimID, Interval)
+M13F3<-SimulatedData%>%
+  filter(MaleVisitRate==13 | FemaleVisitRate==3)%>%
+  arrange(SimID, Interval) 
+M13F4<-SimulatedData%>%
+  filter(MaleVisitRate==13 | FemaleVisitRate==4)%>%
+  arrange(SimID, Interval) 
+M13F5<-SimulatedData%>%
+  filter(MaleVisitRate==13 | FemaleVisitRate==5)%>%
+  arrange(SimID, Interval) 
+M13F6<-SimulatedData%>%
+  filter(MaleVisitRate==13 | FemaleVisitRate==6)%>%
+  arrange(SimID, Interval) 
+M13F7<-SimulatedData%>%
+  filter(MaleVisitRate==13 | FemaleVisitRate==7)%>%
+  arrange(SimID, Interval) 
+M13F8<-SimulatedData%>%
+  filter(MaleVisitRate==13 | FemaleVisitRate==8)%>%
+  arrange(SimID, Interval) 
+M13F9<-SimulatedData%>%
+  filter(MaleVisitRate==13 | FemaleVisitRate==9)%>%
+  arrange(SimID, Interval) 
+M13F10<-SimulatedData%>%
+  filter(MaleVisitRate==13 | FemaleVisitRate==10)%>%
+  arrange(SimID, Interval) 
+M13F11<-SimulatedData%>%
+  filter(MaleVisitRate==13 | FemaleVisitRate==11)%>%
+  arrange(SimID, Interval) 
+M13F12<-SimulatedData%>%
+  filter(MaleVisitRate==13 | FemaleVisitRate==12)%>%
+  arrange(SimID, Interval) 
+M13F13<-SimulatedData%>%
+  filter(MaleVisitRate==13 | FemaleVisitRate==13)%>%
+  arrange(SimID, Interval) 
+M13F14<-SimulatedData%>%
+  filter(MaleVisitRate==13 | FemaleVisitRate==14)%>%
+  arrange(SimID, Interval)
+M14F3<-SimulatedData%>%
+  filter(MaleVisitRate==14 | FemaleVisitRate==3)%>%
+  arrange(SimID, Interval) 
+M14F4<-SimulatedData%>%
+  filter(MaleVisitRate==14 | FemaleVisitRate==4)%>%
+  arrange(SimID, Interval) 
+M14F5<-SimulatedData%>%
+  filter(MaleVisitRate==14 | FemaleVisitRate==5)%>%
+  arrange(SimID, Interval) 
+M14F6<-SimulatedData%>%
+  filter(MaleVisitRate==14 | FemaleVisitRate==6)%>%
+  arrange(SimID, Interval) 
+M14F7<-SimulatedData%>%
+  filter(MaleVisitRate==14 | FemaleVisitRate==7)%>%
+  arrange(SimID, Interval) 
+M14F8<-SimulatedData%>%
+  filter(MaleVisitRate==14 | FemaleVisitRate==8)%>%
+  arrange(SimID, Interval) 
+M14F9<-SimulatedData%>%
+  filter(MaleVisitRate==14 | FemaleVisitRate==9)%>%
+  arrange(SimID, Interval) 
+M14F10<-SimulatedData%>%
+  filter(MaleVisitRate==14 | FemaleVisitRate==10)%>%
+  arrange(SimID, Interval) 
+M14F11<-SimulatedData%>%
+  filter(MaleVisitRate==14 | FemaleVisitRate==11)%>%
+  arrange(SimID, Interval) 
+M14F12<-SimulatedData%>%
+  filter(MaleVisitRate==14 | FemaleVisitRate==12)%>%
+  arrange(SimID, Interval) 
+M14F13<-SimulatedData%>%
+  filter(MaleVisitRate==14 | FemaleVisitRate==13)%>%
+  arrange(SimID, Interval) 
+M14F14<-SimulatedData%>%
+  filter(MaleVisitRate==14 | FemaleVisitRate==14)%>%
+  arrange(SimID, Interval)
+MergedSimData<- bind_rows(list(M3F3,M4F3,	M5F3,	M6F3,	M7F3,	M8F3,	M9F3,	M10F3,	M11F3,	M12F3,	M13F3,	M14F3,
+                               M3F4,	M4F4,	M5F4,	M6F4,	M7F4,	M8F4,	M9F4,	M10F4,	M11F4,	M12F4,	M13F4,	M14F4,
+                               M3F5	,M4F5,	M5F5,	M6F5,	M7F5,	M8F5,	M9F5,	M10F5,	M11F5,	M12F5,	M13F5,	M14F5,
+                               M3F6,	M4F6,	M5F6,	M6F6,	M7F6,	M8F6,	M9F6,	M10F6,	M11F6	,M12F6,	M13F6,	M14F6,
+                               M3F7,	M4F7,	M5F7,	M6F7,	M7F7,	M8F7,	M9F7,	M10F7,	M11F7,	M12F7,	M13F7,	M14F7,
+                               M3F8,	M4F8,	M5F8,	M6F8,	M7F8,	M8F8,	M9F8,	M10F8,	M11F8,	M12F8,	M13F8,	M14F8,
+                               M3F9,	M4F9,	M5F9,	M6F9,	M7F9,	M8F9,	M9F9,	M10F9,	M11F9,	M12F9,	M13F9,	M14F9,
+                               M3F10,	M4F10,	M5F10,	M6F10,	M7F10,	M8F10,	M9F10,	M10F10,	M11F10,	M12F10,	M13F10,	M14F10,
+                               M3F11,	M4F11,	M5F11,	M6F11,	M7F11,	M8F11,	M9F11,	M10F11,	M11F11,	M12F11,	M13F11,	M14F11,
+                               M3F12,	M4F12,	M5F12,	M6F12,	M7F12,	M8F12,	M9F12,	M10F12,	M11F12,	M12F12,	M13F12,	M14F12,
+                               M3F13,	M4F13,	M5F13,	M6F13,	M7F13,	M8F13,	M9F13,	M10F13,	M11F13,	M12F13,	M13F13,	M14F13,
+                               M3F14,	M4F14,	M5F14,	M6F14,	M7F14,	M8F14,	M9F14,	M10F14,	M11F14,	M12F14,	M13F14,	M14F14
+))
+
+MergedSimData<-mutate(MergedSimData, OverallSimID=cumsum(SimID != c(".NOTHING.",head(SimID,-1))))
+
+FinalSimData<-group_by(MergedSimData, OverallSimID)
+
+SimulatedSummary<-summarise(FinalSimData,
+                       count = n(),
+                       malecount = length(Sex[Sex==1]),
+                       femalecount = length(Sex[Sex==0]),
+                       number_alternations= sum(diff(Sex)!=0),
+                       alternation_rate= (number_alternations/count),
+                       alternationpercent= (alternation_rate*100),
+                       VisitRateDifference= abs(max(MaleVisitRate)-max(FemaleVisitRate))) ### this poss where prob arise 20:46//now works 20:56
 
 
+AltSim<-select(SimulatedSummary, OverallSimID, alternation_rate, alternationpercent, VisitRateDifference)
 
 
-
-
+### Make summary for each difference in rate
+SimByRateSum<-summarise(group_by(AltSim, VisitRateDifference),
+                                       meanalternation = mean(alternation_rate),
+                                       SDalt= sd(alternation_rate),
+                                       SampleSize= length(alternation_rate),
+                                       SE= SDalt/sqrt(SampleSize),
+                                       lwr= meanalternation-SE,
+                                       upr= meanalternation+SE)
+  
 
 
 # Investigating repeatability of alternation within a brood event ---------
