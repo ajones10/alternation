@@ -462,6 +462,27 @@ SimMale14<-SimMale14%>%
 SimulatedMales<-bind_rows(list(SimMale3, SimMale4, SimMale5, SimMale6, SimMale7, SimMale8, SimMale9, SimMale10, SimMale11, SimMale12, SimMale13, SimMale14))
 SimulatedFemales<-bind_rows(list(SimFemale3, SimFemale4, SimFemale5, SimFemale6, SimFemale7, SimFemale8, SimFemale9, SimFemale10, SimFemale11, SimFemale12, SimFemale13, SimFemale14))
 
+# Select necessary rows and rename
+SimulatedMales<- rename(SimulatedMales, VisitRate = round_male_visit_rate)
+SimulatedMales<- rename(SimulatedMales, SimID = SimMale)
+SimulatedMales<- rename(SimulatedMales, Interval = MaleCumulative)
+SimulatedMales<- select(SimulatedMales, SimID, Sex, VisitRate, Interval)
+
+SimulatedFemales<- rename(SimulatedFemales, VisitRate = round_female_visit_rate)
+SimulatedFemales<- rename(SimulatedFemales, SimID = SimFemale)
+SimulatedFemales<- rename(SimulatedFemales, Interval = FemCumulative)
+SimulatedFemales<- select(SimulatedFemales, SimID, Sex, VisitRate, Interval)
+
+SimulatedData<- bind_rows(list(SimulatedMales, SimulatedFemales))
+# This orders/arranges df by visit rate, then by SimID, then by interval
+SimulatedData<-SimulatedData%>%
+  group_by(VisitRate, SimID)%>%
+  arrange(Interval)
+
+
+
+
+
 
 # Investigating repeatability of alternation within a brood event ---------
 
