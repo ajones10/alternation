@@ -235,6 +235,233 @@ femaleinterfeedsim5<-femaleinterfeedsim5%>%
   group_by(SimFemale)%>%
   mutate(FemCumulative = cumsum(interfeed_interval))
 
+# Need to do this for each sex and all visit rates 3 - 14 (24 times in total)
+# Females first
+#SimFemale3 means a dataframe of all simulated females visiting at rate 3
+
+SimFemale3<-filter(femaleinterfeed314sh, round_female_visit_rate == 3)
+SimFemale3<-mutate(SimFemale3, SimFemale = rep(1:((nrow(SimFemale3)/2)+1), each = 2, len = nrow(SimFemale3)))
+# Shuffle the simulated female ID
+SimFemale3<-mutate(SimFemale3, SimFemale = sample(SimFemale))
+# Calculate cumulative sum for each SimFemale
+SimFemale3<-SimFemale3%>%
+  group_by(SimFemale)%>%
+  mutate(FemCumulative = cumsum(interfeed_interval))
+
+SimFemale4<-filter(femaleinterfeed314sh, round_female_visit_rate == 4)
+SimFemale4<-mutate(SimFemale4, SimFemale = rep(1:((nrow(SimFemale4)/3)+1), each = 3, len = nrow(SimFemale4)))
+# Shuffle the simulated female ID
+SimFemale4<-mutate(SimFemale4, SimFemale = sample(SimFemale))
+# Calculate cumulative sum for each SimFemale
+SimFemale4<-SimFemale4%>%
+  group_by(SimFemale)%>%
+  mutate(FemCumulative = cumsum(interfeed_interval))
+
+SimFemale5<-filter(femaleinterfeed314sh, round_female_visit_rate == 5)
+SimFemale5<-mutate(SimFemale5, SimFemale = rep(1:((nrow(SimFemale5)/4)+1), each = 4, len = nrow(SimFemale5)))
+# Shuffle the simulated female ID
+SimFemale5<-mutate(SimFemale5, SimFemale = sample(SimFemale))
+# Calculate cumulative sum for each SimFemale
+SimFemale5<-SimFemale5%>%
+  group_by(SimFemale)%>%
+  mutate(FemCumulative = cumsum(interfeed_interval))
+
+SimFemale6<-filter(femaleinterfeed314sh, round_female_visit_rate == 6)
+SimFemale6<-mutate(SimFemale6, SimFemale = rep(1:((nrow(SimFemale6)/5)+1), each = 5, len = nrow(SimFemale6)))
+# Shuffle the simulated female ID
+SimFemale6<-mutate(SimFemale6, SimFemale = sample(SimFemale))
+# Calculate cumulative sum for each SimFemale
+SimFemale6<-SimFemale6%>%
+  group_by(SimFemale)%>%
+  mutate(FemCumulative = cumsum(interfeed_interval))
+
+SimFemale7<-filter(femaleinterfeed314sh, round_female_visit_rate == 7)
+SimFemale7<-mutate(SimFemale7, SimFemale = rep(1:((nrow(SimFemale7)/6)+1), each = 6, len = nrow(SimFemale7)))
+# Shuffle the simulated female ID
+SimFemale7<-mutate(SimFemale7, SimFemale = sample(SimFemale))
+# Calculate cumulative sum for each SimFemale
+SimFemale7<-SimFemale7%>%
+  group_by(SimFemale)%>%
+  mutate(FemCumulative = cumsum(interfeed_interval))
+
+SimFemale8<-filter(femaleinterfeed314sh, round_female_visit_rate == 8)
+SimFemale8<-mutate(SimFemale8, SimFemale = rep(1:((nrow(SimFemale8)/7)+1), each = 7, len = nrow(SimFemale8)))
+# Shuffle the simulated female ID
+SimFemale8<-mutate(SimFemale8, SimFemale = sample(SimFemale))
+# Calculate cumulative sum for each SimFemale
+SimFemale8<-SimFemale8%>%
+  group_by(SimFemale)%>%
+  mutate(FemCumulative = cumsum(interfeed_interval))
+
+SimFemale9<-filter(femaleinterfeed314sh, round_female_visit_rate == 9)
+SimFemale9<-mutate(SimFemale9, SimFemale = rep(1:((nrow(SimFemale9)/8)+1), each = 8, len = nrow(SimFemale9)))
+# Shuffle the simulated female ID
+SimFemale9<-mutate(SimFemale9, SimFemale = sample(SimFemale))
+# Calculate cumulative sum for each SimFemale
+SimFemale9<-SimFemale9%>%
+  group_by(SimFemale)%>%
+  mutate(FemCumulative = cumsum(interfeed_interval))
+
+SimFemale10<-filter(femaleinterfeed314sh, round_female_visit_rate == 10)
+SimFemale10<-mutate(SimFemale10, SimFemale = rep(1:((nrow(SimFemale10)/9)+1), each = 9, len = nrow(SimFemale10)))
+# Shuffle the simulated female ID
+SimFemale10<-mutate(SimFemale10, SimFemale = sample(SimFemale))
+# Calculate cumulative sum for each SimFemale
+SimFemale10<-SimFemale10%>%
+  group_by(SimFemale)%>%
+  mutate(FemCumulative = cumsum(interfeed_interval))
+
+SimFemale11<-filter(femaleinterfeed314sh, round_female_visit_rate == 11)
+SimFemale11<-mutate(SimFemale11, SimFemale = rep(1:((nrow(SimFemale11)/10)+1), each = 10, len = nrow(SimFemale11)))
+# Shuffle the simulated female ID
+SimFemale11<-mutate(SimFemale11, SimFemale = sample(SimFemale))
+# Calculate cumulative sum for each SimFemale
+SimFemale11<-SimFemale11%>%
+  group_by(SimFemale)%>%
+  mutate(FemCumulative = cumsum(interfeed_interval))
+
+SimFemale12<-filter(femaleinterfeed314sh, round_female_visit_rate == 12)
+SimFemale12<-mutate(SimFemale12, SimFemale = rep(1:((nrow(SimFemale12)/11)+1), each = 11, len = nrow(SimFemale12)))
+# Shuffle the simulated female ID
+SimFemale12<-mutate(SimFemale12, SimFemale = sample(SimFemale))
+# Calculate cumulative sum for each SimFemale
+SimFemale12<-SimFemale12%>%
+  group_by(SimFemale)%>%
+  mutate(FemCumulative = cumsum(interfeed_interval))
+
+SimFemale13<-filter(femaleinterfeed314sh, round_female_visit_rate == 13)
+SimFemale13<-mutate(SimFemale13, SimFemale = rep(1:((nrow(SimFemale13)/12)+1), each = 12, len = nrow(SimFemale13)))
+# Shuffle the simulated female ID
+SimFemale13<-mutate(SimFemale13, SimFemale = sample(SimFemale))
+# Calculate cumulative sum for each SimFemale
+SimFemale13<-SimFemale13%>%
+  group_by(SimFemale)%>%
+  mutate(FemCumulative = cumsum(interfeed_interval))
+
+SimFemale14<-filter(femaleinterfeed314sh, round_female_visit_rate == 14)
+SimFemale14<-mutate(SimFemale14, SimFemale = rep(1:((nrow(SimFemale14)/13)+1), each = 13, len = nrow(SimFemale14)))
+# Shuffle the simulated female ID
+SimFemale14<-mutate(SimFemale14, SimFemale = sample(SimFemale))
+# Calculate cumulative sum for each SimFemale
+SimFemale14<-SimFemale14%>%
+  group_by(SimFemale)%>%
+  mutate(FemCumulative = cumsum(interfeed_interval))
+
+# Males next
+#SimMale3 means a dataframe of all simulated males visiting at rate 3
+
+SimMale3<-filter(maleinterfeed314sh, round_male_visit_rate == 3)
+SimMale3<-mutate(SimMale3, SimMale = rep(1:((nrow(SimMale3)/2)+1), each = 2, len = nrow(SimMale3)))
+# Shuffle the simulated female ID
+SimMale3<-mutate(SimMale3, SimMale = sample(SimMale))
+# Calculate cumulative sum for each SimFemale
+SimMale3<-SimMale3%>%
+  group_by(SimMale)%>%
+  mutate(MaleCumulative = cumsum(interfeed_interval))
+
+SimMale4<-filter(maleinterfeed314sh, round_male_visit_rate == 4)
+SimMale4<-mutate(SimMale4, SimMale = rep(1:((nrow(SimMale4)/3)+1), each = 3, len = nrow(SimMale4)))
+# Shuffle the simulated female ID
+SimMale4<-mutate(SimMale4, SimMale = sample(SimMale))
+# Calculate cumulative sum for each SimFemale
+SimMale4<-SimMale4%>%
+  group_by(SimMale)%>%
+  mutate(MaleCumulative = cumsum(interfeed_interval))
+
+SimMale5<-filter(maleinterfeed314sh, round_male_visit_rate == 5)
+SimMale5<-mutate(SimMale5, SimMale = rep(1:((nrow(SimMale5)/4)+1), each = 4, len = nrow(SimMale5)))
+# Shuffle the simulated female ID
+SimMale5<-mutate(SimMale5, SimMale = sample(SimMale))
+# Calculate cumulative sum for each SimFemale
+SimMale5<-SimMale5%>%
+  group_by(SimMale)%>%
+  mutate(MaleCumulative = cumsum(interfeed_interval))
+
+SimMale6<-filter(maleinterfeed314sh, round_male_visit_rate == 6)
+SimMale6<-mutate(SimMale6, SimMale = rep(1:((nrow(SimMale6)/5)+1), each = 5, len = nrow(SimMale6)))
+# Shuffle the simulated female ID
+SimMale6<-mutate(SimMale6, SimMale = sample(SimMale))
+# Calculate cumulative sum for each SimFemale
+SimMale6<-SimMale6%>%
+  group_by(SimMale)%>%
+  mutate(MaleCumulative = cumsum(interfeed_interval))
+
+SimMale7<-filter(maleinterfeed314sh, round_male_visit_rate == 7)
+SimMale7<-mutate(SimMale7, SimMale = rep(1:((nrow(SimMale7)/6)+1), each = 6, len = nrow(SimMale7)))
+# Shuffle the simulated female ID
+SimMale7<-mutate(SimMale7, SimMale = sample(SimMale))
+# Calculate cumulative sum for each SimFemale
+SimMale7<-SimMale7%>%
+  group_by(SimMale)%>%
+  mutate(MaleCumulative = cumsum(interfeed_interval))
+
+SimMale8<-filter(maleinterfeed314sh, round_male_visit_rate == 8)
+SimMale8<-mutate(SimMale8, SimMale = rep(1:((nrow(SimMale8)/7)+1), each = 7, len = nrow(SimMale8)))
+# Shuffle the simulated female ID
+SimMale8<-mutate(SimMale8, SimMale = sample(SimMale))
+# Calculate cumulative sum for each SimFemale
+SimMale8<-SimMale8%>%
+  group_by(SimMale)%>%
+  mutate(MaleCumulative = cumsum(interfeed_interval))
+
+SimMale9<-filter(maleinterfeed314sh, round_male_visit_rate == 9)
+SimMale9<-mutate(SimMale9, SimMale = rep(1:((nrow(SimMale9)/8)+1), each = 8, len = nrow(SimMale9)))
+# Shuffle the simulated female ID
+SimMale9<-mutate(SimMale9, SimMale = sample(SimMale))
+# Calculate cumulative sum for each SimFemale
+SimMale9<-SimMale9%>%
+  group_by(SimMale)%>%
+  mutate(MaleCumulative = cumsum(interfeed_interval))
+
+SimMale10<-filter(maleinterfeed314sh, round_male_visit_rate == 10)
+SimMale10<-mutate(SimMale10, SimMale = rep(1:((nrow(SimMale10)/9)+1), each = 9, len = nrow(SimMale10)))
+# Shuffle the simulated female ID
+SimMale10<-mutate(SimMale10, SimMale = sample(SimMale))
+# Calculate cumulative sum for each SimFemale
+SimMale10<-SimMale10%>%
+  group_by(SimMale)%>%
+  mutate(MaleCumulative = cumsum(interfeed_interval))
+
+SimMale11<-filter(maleinterfeed314sh, round_male_visit_rate == 11)
+SimMale11<-mutate(SimMale11, SimMale = rep(1:((nrow(SimMale11)/10)+1), each = 10, len = nrow(SimMale11)))
+# Shuffle the simulated female ID
+SimMale11<-mutate(SimMale11, SimMale = sample(SimMale))
+# Calculate cumulative sum for each SimFemale
+SimMale11<-SimMale11%>%
+  group_by(SimMale)%>%
+  mutate(MaleCumulative = cumsum(interfeed_interval))
+
+SimMale12<-filter(maleinterfeed314sh, round_male_visit_rate == 12)
+SimMale12<-mutate(SimMale12, SimMale = rep(1:((nrow(SimMale12)/11)+1), each = 11, len = nrow(SimMale12)))
+# Shuffle the simulated female ID
+SimMale12<-mutate(SimMale12, SimMale = sample(SimMale))
+# Calculate cumulative sum for each SimFemale
+SimMale12<-SimMale12%>%
+  group_by(SimMale)%>%
+  mutate(MaleCumulative = cumsum(interfeed_interval))
+
+SimMale13<-filter(maleinterfeed314sh, round_male_visit_rate == 13)
+SimMale13<-mutate(SimMale13, SimMale = rep(1:((nrow(SimMale13)/12)+1), each = 12, len = nrow(SimMale13)))
+# Shuffle the simulated female ID
+SimMale13<-mutate(SimMale13, SimMale = sample(SimMale))
+# Calculate cumulative sum for each SimFemale
+SimMale13<-SimMale13%>%
+  group_by(SimMale)%>%
+  mutate(MaleCumulative = cumsum(interfeed_interval))
+
+SimMale14<-filter(maleinterfeed314sh, round_male_visit_rate == 14)
+SimMale14<-mutate(SimMale14, SimMale = rep(1:((nrow(SimMale14)/13)+1), each = 13, len = nrow(SimMale14)))
+# Shuffle the simulated female ID
+SimMale14<-mutate(SimMale14, SimMale = sample(SimMale))
+# Calculate cumulative sum for each SimFemale
+SimMale14<-SimMale14%>%
+  group_by(SimMale)%>%
+  mutate(MaleCumulative = cumsum(interfeed_interval))
+
+# Join together by Sex
+SimulatedMales<-bind_rows(list(SimMale3, SimMale4, SimMale5, SimMale6, SimMale7, SimMale8, SimMale9, SimMale10, SimMale11, SimMale12, SimMale13, SimMale14))
+SimulatedFemales<-bind_rows(list(SimFemale3, SimFemale4, SimFemale5, SimFemale6, SimFemale7, SimFemale8, SimFemale9, SimFemale10, SimFemale11, SimFemale12, SimFemale13, SimFemale14))
+
 
 # Investigating repeatability of alternation within a brood event ---------
 
