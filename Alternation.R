@@ -127,6 +127,21 @@ Merged <- transform(Merged, round_male_visit_rate = round(male_visit_rate))
 Merged <- transform(Merged, round_female_visit_rate = round(female_visit_rate))
 Merged <- transform(Merged, visit_rate_diff_after_rounding = abs(round_male_visit_rate - round_female_visit_rate))
 
+# Check rounded distributions
+malevisitr<- ggplot(Merged, aes(x= round_male_visit_rate))+
+  geom_histogram(binwidth=1)+
+  theme_classic()
+
+femalevisitr<- ggplot(Merged, aes(x= round_female_visit_rate))+
+  geom_histogram(binwidth=1)+
+  theme_classic()
+
+visitdiffr<- ggplot(Merged, aes(x= visit_rate_diff_after_rounding))+
+  geom_histogram(binwidth=1)+
+  theme_classic()
+
+grid.arrange(malevisitr, femalevisitr, visitdiffr, ncol=1)
+
 # Calculates the Brood Number
 Merged<-Merged %>%
   group_by(PairID) %>%
@@ -197,6 +212,29 @@ maleinterfeed<-select(maleinterfeed, -round_female_visit_rate)
 
 femaleinterfeed<-filter(mfinterfeed, Sex == 0)
 femaleinterfeed<-select(femaleinterfeed, -round_male_visit_rate)
+
+# Based on distribution of the rounded visit rates, I decided to do between 3 and 14 visits.
+# This results in 12 visit rates for males and females giving 144 possible outcomes
+
+# Filter the interfeed dataframes to only those where visit rate is 3 to 14 inclusive.
+femaleinterfeed314<-filter(femaleinterfeed, round_female_visit_rate <= 14 & round_female_visit_rate >= 3)
+maleinterfeed314<-filter(maleinterfeed, round_male_visit_rate <= 14 & round_male_visit_rate >= 3)
+
+# Randomise the interfeed intervals within individuals that have the same visit rate
+femaleinterfeed314sh<-femaleinterfeed314 %>% group_by(round_female_visit_rate) %>% mutate(interfeed_interval=sample(interfeed_interval))
+maleinterfeed314sh<-maleinterfeed314 %>% group_by(round_male_visit_rate) %>% mutate(interfeed_interval=sample(interfeed_interval))
+
+# Example to test to start with.
+# Make df for female rate = 5, and assign 4 rows to a "Simulated Female"
+femaleinterfeedsim5<-filter(femaleinterfeed314sh, round_female_visit_rate == 5)
+femaleinterfeedsim5<-mutate(femaleinterfeedsim5, SimFemale = rep(1:((nrow(femaleinterfeedsim5)/4)+1), each = 4, len = nrow(femaleinterfeedsim5)))
+# Shuffle the simulated female ID
+femaleinterfeedsim5<-mutate(femaleinterfeedsim5, SimFemale = sample(SimFemale))
+# Calculate cumulative sum for each SimFemale
+femaleinterfeedsim5<-femaleinterfeedsim5%>%
+  group_by(SimFemale)%>%
+  mutate(FemCumulative = cumsum(interfeed_interval))
+
 
 # Investigating repeatability of alternation within a brood event ---------
 
