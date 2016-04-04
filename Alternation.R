@@ -484,6 +484,8 @@ SimulatedData<-SimulatedData%>%
 
 
 
+
+
 # Investigating repeatability of alternation within a brood event ---------
 
 # Now to create graph where x=age (day of video) y=alternation grouped by pair
