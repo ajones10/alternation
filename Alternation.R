@@ -950,7 +950,22 @@ SimByRateSum<-summarise(group_by(AltSim, VisitRateDifference),
                                        lwr= meanalternation-SE,
                                        upr= meanalternation+SE)
   
+simplot<- ggplot(SimByRateSum, aes(x=VisitRateDifference, y=meanalternation))+
+  geom_point()+
+  geom_line()+
+  geom_errorbar(aes(ymin=lwr, ymax=upr))+
+  xlab("Visit rate difference")+
+  ylab("Mean alternation")+
+  ylim(0,1)+
+  theme_classic()
 
+# Combine them
+simplot<- simplot + 
+  geom_point(data=VisitRateSum, aes(x=visit_rate_diff_after_rounding, y=meanalternation))+
+  geom_line(data=VisitRateSum, aes(x=visit_rate_diff_after_rounding, y=meanalternation))+
+  geom_errorbar(aes(ymin=lwr, ymax=upr))+
+  theme_classic()
+print(simplot)
 
 # Investigating repeatability of alternation within a brood event ---------
 
