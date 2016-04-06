@@ -960,12 +960,72 @@ simplot<- ggplot(SimByRateSum, aes(x=VisitRateDifference, y=meanalternation))+
   theme_classic()
 
 # Combine them
-simplot<- simplot + 
-  geom_point(data=VisitRateSum, aes(x=visit_rate_diff_after_rounding, y=meanalternation))+
-  geom_line(data=VisitRateSum, aes(x=visit_rate_diff_after_rounding, y=meanalternation))+
+VisitRateSum<- rename(VisitRateSum, VisitRateDifference = visit_rate_diff_after_rounding)
+VisitRateSum<- mutate(VisitRateSum, Type= rep("Observed", nrow(VisitRateSum)))
+SimByRateSum<- mutate(SimByRateSum, Type= rep("Expected", nrow(SimByRateSum)))
+CombinedExpObs<- bind_rows(VisitRateSum, SimByRateSum)
+
+ggplot(data=CombinedExpObs, aes(x=VisitRateDifference, y=meanalternation, group=Type, colour=Type))+
+  geom_point()+
+  geom_line()+
   geom_errorbar(aes(ymin=lwr, ymax=upr))+
+  xlab("Visit rate difference")+
+  ylab("Mean alternation")+
   theme_classic()
-print(simplot)
+
+# Above graph has all of the observed, but to compare just the ones we did simulation for:
+CombinedExpObsL14<- filter(CombinedExpObs, VisitRateDifference<=14)
+CombinedExpObsL14$Type<-factor(CombinedExpObsL14$Type)
+ggplot(data=CombinedExpObsL14, aes(x=VisitRateDifference, y=meanalternation, group=Type, colour=Type))+
+  geom_point()+
+  geom_line()+
+  geom_errorbar(aes(ymin=lwr, ymax=upr))+
+  xlab("Visit rate difference")+
+  ylab("Mean alternation")+
+  scale_colour_discrete("Type", breaks=c("Expected", "Observed"), labels=c("95% Expected", "Mean Observed"))+
+  theme_classic()
+
+# To model need complete data set
+Merged<-Merged%>%
+  ungroup()%>%
+  mutate(Type= rep("Observed", nrow(Merged)))
+
+Observed<-rename(Merged, VisitRateDifference = visit_rate_diff_after_rounding)
+Observed<-select(Observed, alternation_rate, alternationpercent, VisitRateDifference, Type)
+
+AltSim<- mutate(AltSim, Type= rep("Expected", nrow(AltSim)))
+CombinedExpObsTotal<- bind_rows(Observed, AltSim)
+CombinedExpObsTotalL14<- filter(CombinedExpObsTotal, VisitRateDifference<=14)
+CombinedExpObsTotalL14$Type<-factor(CombinedExpObsTotalL14$Type)
+
+
+CombinedExpObsTotalL14$Category<-interaction(CombinedExpObsTotalL14$Type, CombinedExpObsTotalL14$VisitRateDifference)
+CombinedExpObsTotalL14$Category<-factor(CombinedExpObsTotalL14$Category)
+CombinedExpObsTotalL14$VisitRateDifference<-factor(CombinedExpObsTotalL14$VisitRateDifference)
+expobsmod<-lm(alternation_rate ~ VisitRateDifference+Type, data=CombinedExpObsTotalL14)
+par(mfrow=c(2,2))
+plot(expobsmod)
+anova(expobsmod)
+summary(expobsmod)
+
+library(multcomp)
+
+expobstukey<- glht(expobsmod, linfct=mcp(Type="Tukey", interaction_average=TRUE))
+summary(expobstukey)
+
+MeanObs<-filter(CombinedExpObsL14, Type=="Observed")
+MeanSim<-filter(CombinedExpObsL14, Type=="Expected")
+Meanmerge<-merge(MeanObs, MeanSim, by="VisitRateDifference")
+
+
+pairwise.t.test(Meanmerge$meanalternation.x, Meanmerge$meanalternation.y, paired=TRUE, p.adjust.method = "bonf")
+
+
+CombinedExpObsL14<-mutate(CombinedExpObsL14, InteractionID = seq(1:nrow(CombinedExpObsL14)))
+CombinedExpObsL14$InteractionID<-factor(CombinedExpObsL14$InteractionID)
+combimodel<-lm(meanalternation~InteractionID, data=CombinedExpObsL14)
+anova(combimodel)
+summary(combimodel)
 
 # Investigating repeatability of alternation within a brood event ---------
 
