@@ -982,7 +982,9 @@ ggplot(data=CombinedExpObsL14, aes(x=VisitRateDifference, y=meanalternation, gro
   geom_errorbar(aes(ymin=lwr, ymax=upr))+
   xlab("Visit rate difference")+
   ylab("Mean alternation")+
-  scale_colour_discrete("Type", breaks=c("Expected", "Observed"), labels=c("95% Expected", "Mean Observed"))+
+  scale_colour_manual(values=c("black", "grey"), labels=c("95% Expected", "Mean Observed"))+
+  scale_x_continuous(breaks = pretty(CombinedExpObsL14$VisitRateDifference, n = 15)) +
+  scale_y_continuous(breaks = pretty(CombinedExpObsL14$meanalternation, n = 8))+
   theme_classic()
 
 # To model need complete data set
