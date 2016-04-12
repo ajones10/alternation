@@ -389,17 +389,17 @@ ggplot(data=CombinedExpObs, aes(x=VisitRateDifference, y=meanalternation, group=
   theme_classic()
 
 # Above graph has all of the observed, but to compare just the ones we did simulation for:
-CombinedExpObsL14<- filter(CombinedExpObs, VisitRateDifference<=14)
-CombinedExpObsL14$Type<-factor(CombinedExpObsL14$Type)
-ggplot(data=CombinedExpObsL14, aes(x=VisitRateDifference, y=meanalternation, group=Type, colour=Type))+
+CombinedExpObsL11<- filter(CombinedExpObs, VisitRateDifference<=11)
+CombinedExpObsL11$Type<-factor(CombinedExpObsL11$Type)
+ggplot(data=CombinedExpObsL11, aes(x=VisitRateDifference, y=meanalternation, group=Type, colour=Type))+
   geom_point()+
   geom_line()+
   geom_errorbar(aes(ymin=lwr, ymax=upr))+
   xlab("Visit rate difference")+
   ylab("Mean alternation")+
   scale_colour_manual(values=c("black", "grey"), labels=c("95% Expected", "Mean Observed"))+
-  scale_x_continuous(breaks = pretty(CombinedExpObsL14$VisitRateDifference, n = 15)) +
-  scale_y_continuous(breaks = pretty(CombinedExpObsL14$meanalternation, n = 8))+
+  scale_x_continuous(breaks = pretty(CombinedExpObsL11$VisitRateDifference, n = 12)) +
+  scale_y_continuous(breaks = pretty(CombinedExpObsL11$meanalternation, n = 8))+
   theme_classic()
 
 # To model need complete data set
