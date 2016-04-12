@@ -186,6 +186,18 @@ ggplot(VisitRateSum, aes(x=visit_rate_diff_after_rounding, y=meanalternation))+
   ylab("Mean alternation")+
   ylim(0,0.8)+
   theme_classic()
+
+# Do an ANOVA for visit rate difference and mean alternation
+Merged1$visit_rate_diff_after_rounding<-as.numeric(Merged1$visit_rate_diff_after_rounding)
+# Use differences up to 11 in later graph so do those ones only
+Merged2<-filter(Merged1, visit_rate_diff_after_rounding <= 11)
+Merged2$visit_rate_diff_after_rounding<-factor(Merged2$visit_rate_diff_after_rounding)
+vrdaltmod<-lm(alternation_rate ~ visit_rate_diff_after_rounding, data=Merged2)
+par(mfrow=c(2,2))
+plot(vrdaltmod)
+anova(vrdaltmod)
+summary(vrdaltmod)
+
 # This section calculates the difference between parents' visit rates and investigates how this
 # affects alternation
 
@@ -238,8 +250,7 @@ femaleinterfeedsim5<-femaleinterfeedsim5%>%
   group_by(SimFemale)%>%
   mutate(FemCumulative = cumsum(interfeed_interval))
 
-# Need to do this for each sex and all visit rates 3 - 14 (24 times in total)
-#SimFemale3 means a dataframe of all simulated females visiting at rate 3
+## Malika section below
 
 # females
 
@@ -338,7 +349,7 @@ SimulatedSummary<-summarise(FinalSimData,
 
 boot_per_ij_bootnb <- list()
 
-for (bootnb in 1:10) # increase to 10 0000
+for (bootnb in 1:10) # increase to 10 000
 {
 boot_per_ij <- list()
 i = rep(3:14, each = 12) # male visit rate
@@ -361,7 +372,9 @@ ALLboot_per_ij_bootnb <- do.call(rbind, boot_per_ij_bootnb)
 
 
 ### Make summary of simulated data for each difference in rate
-SimByRateSum<-summarise(group_by(ALLboot_per_ij_bootnb, VisitRateDifference),
+SimulatedSummary1<- filter(SimulatedSummary, count>1)
+
+SimByRateSum<-summarise(group_by(SimulatedSummary1, VisitRateDifference),
                                        meanalternation = mean(alternation_rate),
                                        SDalt= sd(alternation_rate),
                                        SampleSize= length(alternation_rate),
@@ -418,11 +431,10 @@ Observed<-select(Observed, alternation_rate, alternationpercent, VisitRateDiffer
 AltSim<- mutate(ALLboot_per_ij_bootnb, Type= rep("Expected", nrow(ALLboot_per_ij_bootnb)))
 CombinedExpObsTotal<- bind_rows(Observed, AltSim)
 CombinedExpObsTotalL11<- filter(CombinedExpObsTotal, VisitRateDifference<=11)
+
 CombinedExpObsTotalL11$Type<-factor(CombinedExpObsTotalL11$Type)
-
-
-
 CombinedExpObsTotalL11$VisitRateDifference<-factor(CombinedExpObsTotalL11$VisitRateDifference)
+
 expobsmod<-lm(alternation_rate ~ VisitRateDifference*Type, data=CombinedExpObsTotalL11)
 par(mfrow=c(2,2))
 plot(expobsmod)
@@ -431,7 +443,7 @@ summary(expobsmod)
 
 library(multcomp)
 
-expobstukey<- glht(expobsmod, linfct=mcp(VisitRateDifference="Tukey"))
+expobstukey<- glht(expobsmod, linfct=mcp(Type="Tukey"))
 summary(expobstukey)
 
 MeanObs<-filter(CombinedExpObsL14, Type=="Observed")
