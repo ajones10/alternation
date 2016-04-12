@@ -34,7 +34,7 @@ Summarydata<-summarise(by_pair,
                        malecount = length(Sex[Sex==1]),
                        femalecount = length(Sex[Sex==0]),
                        number_alternations= sum(diff(Sex)!=0),
-                       alternation_rate= (number_alternations/count),
+                       alternation_rate= (number_alternations/(count-1)),
                        alternationpercent= (alternation_rate*100))
 
 # Plots the alternation rates as a histogram
@@ -164,8 +164,12 @@ ggplot(Merged, aes(x=visit_rate_diff_after_rounding, y=alternation_rate))+
   theme_classic()
 
 # This will summarise the data by the difference in visit rate, giving mean alternation etc
+
+# To get averages, count must be greater than 1
+Merged1<-filter(Merged, count>1)
+
 # Enables a graph to be plotted with error bars
-VisitRateSum<-summarise(group_by(Merged, visit_rate_diff_after_rounding),
+VisitRateSum<-summarise(group_by(Merged1, visit_rate_diff_after_rounding),
                         meanalternation = mean(alternation_rate),
                         SDalt= sd(alternation_rate),
                         SampleSize= length(alternation_rate),
@@ -403,6 +407,7 @@ ggplot(data=CombinedExpObsL11, aes(x=VisitRateDifference, y=meanalternation, gro
   theme_classic()
 
 # To model need complete data set
+# Need to check this section (as of 11:08 12/04/2016)
 Merged<-Merged%>%
   ungroup()%>%
   mutate(Type= rep("Observed", nrow(Merged)))
@@ -410,16 +415,15 @@ Merged<-Merged%>%
 Observed<-rename(Merged, VisitRateDifference = visit_rate_diff_after_rounding)
 Observed<-select(Observed, alternation_rate, alternationpercent, VisitRateDifference, Type)
 
-AltSim<- mutate(AltSim, Type= rep("Expected", nrow(AltSim)))
+AltSim<- mutate(ALLboot_per_ij_bootnb, Type= rep("Expected", nrow(ALLboot_per_ij_bootnb)))
 CombinedExpObsTotal<- bind_rows(Observed, AltSim)
-CombinedExpObsTotalL14<- filter(CombinedExpObsTotal, VisitRateDifference<=14)
-CombinedExpObsTotalL14$Type<-factor(CombinedExpObsTotalL14$Type)
+CombinedExpObsTotalL11<- filter(CombinedExpObsTotal, VisitRateDifference<=11)
+CombinedExpObsTotalL11$Type<-factor(CombinedExpObsTotalL11$Type)
 
 
-CombinedExpObsTotalL14$Category<-interaction(CombinedExpObsTotalL14$Type, CombinedExpObsTotalL14$VisitRateDifference)
-CombinedExpObsTotalL14$Category<-factor(CombinedExpObsTotalL14$Category)
-CombinedExpObsTotalL14$VisitRateDifference<-factor(CombinedExpObsTotalL14$VisitRateDifference)
-expobsmod<-lm(alternation_rate ~ VisitRateDifference+Type, data=CombinedExpObsTotalL14)
+
+CombinedExpObsTotalL11$VisitRateDifference<-factor(CombinedExpObsTotalL11$VisitRateDifference)
+expobsmod<-lm(alternation_rate ~ VisitRateDifference*Type, data=CombinedExpObsTotalL11)
 par(mfrow=c(2,2))
 plot(expobsmod)
 anova(expobsmod)
@@ -427,7 +431,7 @@ summary(expobsmod)
 
 library(multcomp)
 
-expobstukey<- glht(expobsmod, linfct=mcp(Type="Tukey", interaction_average=TRUE))
+expobstukey<- glht(expobsmod, linfct=mcp(VisitRateDifference="Tukey"))
 summary(expobstukey)
 
 MeanObs<-filter(CombinedExpObsL14, Type=="Observed")
