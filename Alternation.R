@@ -185,7 +185,6 @@ ggplot(VisitRateSum, aes(x=visit_rate_diff_after_rounding, y=meanalternation))+
 # This section calculates the difference between parents' visit rates and investigates how this
 # affects alternation
 
-
 # Interfeed Intervals -----------------------------------------------------
 # Calculate interfeed intervals
 males<-filter(by_pair, Sex==1)
@@ -343,7 +342,7 @@ j = rep((3:14), 12) # female visit rate
 
 for (k in 1:144) # 144 combination
 { 
-boot_per_ij[[k]] <- SimulatedSummary[,c('alternation_rate', 'MVisitRate','FVisitRate','MFVisitRate' )]%>%
+boot_per_ij[[k]] <- SimulatedSummary[,c('alternation_rate', 'MVisitRate','FVisitRate','MFVisitRate', 'VisitRateDifference' )]%>%
   filter(MVisitRate==i[k] & FVisitRate==j[k])%>%
   mutate(alternation_rate=sample(alternation_rate, replace=TRUE))
 }
@@ -357,11 +356,8 @@ ALLboot_per_ij_bootnb <- do.call(rbind, boot_per_ij_bootnb)
 ## Malika did not go further
 
 
-AltSim<-select(SimulatedSummary, OverallSimID, alternation_rate, alternationpercent, VisitRateDifference)
-
-
-### Make summary for each difference in rate
-SimByRateSum<-summarise(group_by(AltSim, VisitRateDifference),
+### Make summary of simulated data for each difference in rate
+SimByRateSum<-summarise(group_by(ALLboot_per_ij_bootnb, VisitRateDifference),
                                        meanalternation = mean(alternation_rate),
                                        SDalt= sd(alternation_rate),
                                        SampleSize= length(alternation_rate),
