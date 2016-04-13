@@ -10,12 +10,14 @@ old<- Sys.time() # get start time
 
 # Load required libraries
 library(ggplot2)
-library(plyr); library(dplyr)
+library(plyr)
 library(tidyr)
 library(RODBC)
 library(gridExtra)
 library(lme4)
-library(nlme)
+library(rptR)
+library(dplyr)
+
 
 # Read in the excel file with raw data R_RawFeedingVisits.csv
 # Contains DVDRef TstartFeedVisit TendFeedVisit Sex
@@ -460,7 +462,7 @@ combimodel<-lm(meanalternation~InteractionID, data=CombinedExpObsL14)
 anova(combimodel)
 summary(combimodel)
 
-# Investigating repeatability of alternation within a brood event ---------
+# Investigating repeatability of alternation within a brood event (original method) ---------
 
 # Now to create graph where x=age (day of video) y=alternation grouped by pair
 ggplot(Merged, aes(x=Age, y=alternation_rate, colour=BroodRef))+
@@ -696,6 +698,30 @@ summary(mod6)
 # Rsq = 0.03035
 # This takes early (age 6 or 7) and late (age 10 or 11) alternation and sees if they are repeatable
 # within a brood event for a pair
+
+
+# Investigating repeatability of alternation (using rptR package) ---------
+# Use Merged df
+# Need two columns to do proportions
+# Create max alternations possible as count-1
+RptAlt<-select(Merged, count, number_alternations, alternation_rate, Age, PairID, BroodNumber, BroodRef)
+RptAlt<-mutate(RptAlt, max_poss_alts = count-1)
+RptAlt<-filter(RptAlt, max_poss_alts>0)
+
+# Need alternation rate in proportion form, with success and failures
+AlternationSF<- cbind(RptAlt$number_alternations, (RptAlt$max_poss_alts-RptAlt$number_alternations))
+
+RptTimeStart<- Sys.time() # get start time
+# This sees whether Alternation is repeatable within a Brood
+rpt.AltinBrood<- rpt.binomGLMM.multi(AlternationSF, RptAlt$BroodRef, nboot=1000, npermut=1000) # change 10s to 1000
+print(rpt.AltinBrood)
+
+# This sees whether Alternation is repeatable within a Pair
+rpt.AltinPair<- rpt.binomGLMM.multi(AlternationSF, RptAlt$PairID, nboot=1000, npermut=1000)
+print(rpt.AltinPair)
+RptTimeEnd <- Sys.time() - RptTimeStart
+print(RptTimeEnd)
+
 
 # Investigating alternation and pair bond duration ------------------------
 
