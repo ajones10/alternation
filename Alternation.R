@@ -654,7 +654,7 @@ alt2 <- filter(alt2, !is.na(alternation2))
 CombinedAltAge <- merge(alt1, alt2, "BroodRef")
 
 # Plot
-ggplot(CombinedAltAge, aes(x = alternation1, y = alternation2))+
+Unshuffled<-ggplot(CombinedAltAge, aes(x = alternation1, y = alternation2))+
   geom_point()+
   xlim(0,1)+
   ylim(0,1)+
@@ -662,7 +662,7 @@ ggplot(CombinedAltAge, aes(x = alternation1, y = alternation2))+
   ylab("Alternation score for age 10/11")+
   geom_smooth(method=lm, size=1)+
   theme_classic()
-
+Unshuffled
 mod5<- lm(alternation2 ~ alternation1, data=CombinedAltAge)
 mod5[1]
 
@@ -678,12 +678,13 @@ summary(mod5)
 
 # Check without zero data
 CombinedAltAgeNo0 <- filter(CombinedAltAge, alternation1>0 & alternation2>0)
-ggplot(CombinedAltAgeNo0, aes(x = alternation1, y = alternation2))+
+UnshuffledNo0<-ggplot(CombinedAltAgeNo0, aes(x = alternation1, y = alternation2))+
   geom_point()+
   xlim(0,1)+
   ylim(0,1)+
   geom_smooth(method=lm, size=1)+
   theme_classic()
+UnshuffledNo0
 
 mod6<- lm(alternation2 ~ alternation1, data=CombinedAltAgeNo0)
 mod6[1]
@@ -699,6 +700,63 @@ summary(mod6)
 # This takes early (age 6 or 7) and late (age 10 or 11) alternation and sees if they are repeatable
 # within a brood event for a pair
 
+##
+# 14/04 try randomising early and late alternation
+alt1<-rename(alt1, alternation = alternation1)
+alt1<- mutate(alt1, AltNo= rep("Early"))
+alt2<-rename(alt2, alternation = alternation2)
+alt2<- mutate(alt2, AltNo= rep("Late"))
+AltPerBroodShuffle<-bind_rows(alt1, alt2)
+AltPerBroodShuffle<-select(AltPerBroodShuffle, BroodRef, alternation, AltNo)
+AltPerBroodShuffle<- AltPerBroodShuffle%>%
+  group_by(BroodRef)%>%
+  mutate(alternation=sample(alternation))
+
+# 3 values for BroodRef 1188, not sure how to solve so for now just remove
+AltPerBroodShuffle<-subset(AltPerBroodShuffle, BroodRef != 1188)
+AltPerBroodSh<-spread(AltPerBroodShuffle, AltNo, alternation)
+
+# Can now repeat graph
+Shuffled<-ggplot(AltPerBroodSh, aes(x = Early, y = Late))+ #This is not strictly true as they have been shuffled
+  geom_point()+
+  xlim(0,1)+
+  ylim(0,1)+
+  xlab("Alternation score 1")+ # Hence the new labels
+  ylab("Alternation score 2")+
+  geom_smooth(method=lm, size=1)+
+  theme_classic()
+Shuffled
+
+grid.arrange(Unshuffled, Shuffled)
+
+# Model shuffled 
+shufmod<-lm(Late~Early, data=AltPerBroodSh)
+par(mfrow=c(2,2)) 
+plot(shufmod)
+anova(shufmod)
+summary(shufmod)
+
+# Remove zeros from shuffled data
+AltPerBroodShNo0 <- filter(AltPerBroodSh, Early>0 & Late>0)
+# Graph it
+ShuffledNo0<-ggplot(AltPerBroodShNo0, aes(x = Early, y = Late))+ #This is not strictly true as they have been shuffled
+  geom_point()+
+  xlim(0,1)+
+  ylim(0,1)+
+  xlab("Alternation score 1")+ # Hence the new labels
+  ylab("Alternation score 2")+
+  geom_smooth(method=lm, size=1)+
+  theme_classic()
+ShuffledNo0
+
+grid.arrange(UnshuffledNo0, ShuffledNo0)
+
+# Model shuffled without zeros
+shufmodNo0<-lm(Late~Early, data=AltPerBroodShNo0)
+par(mfrow=c(2,2)) 
+plot(shufmodNo0)
+anova(shufmodNo0)
+summary(shufmodNo0)
 
 # Investigating repeatability of alternation (using rptR package) ---------
 # Use Merged df
