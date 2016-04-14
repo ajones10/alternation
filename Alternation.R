@@ -713,15 +713,19 @@ AlternationSF<- cbind(RptAlt$number_alternations, (RptAlt$max_poss_alts-RptAlt$n
 
 RptTimeStart<- Sys.time() # get start time
 # This sees whether Alternation is repeatable within a Brood
-rpt.AltinBrood<- rpt.binomGLMM.multi(AlternationSF, RptAlt$BroodRef, nboot=1000, npermut=1000) # change 10s to 1000
+rpt.AltinBrood<- rpt.binomGLMM.multi(AlternationSF, RptAlt$BroodRef, nboot=10, npermut=10) # change 10s to 1000
 print(rpt.AltinBrood)
 
 # This sees whether Alternation is repeatable within a Pair
-rpt.AltinPair<- rpt.binomGLMM.multi(AlternationSF, RptAlt$PairID, nboot=1000, npermut=1000)
+rpt.AltinPair<- rpt.binomGLMM.multi(AlternationSF, RptAlt$PairID, nboot=10, npermut=10)
 print(rpt.AltinPair)
 RptTimeEnd <- Sys.time() - RptTimeStart
 print(RptTimeEnd)
 
+# Test the below
+rpt.adj.AltinBrood <- rpt.adj(AlternationSF ~ Age + (1|BroodRef), "BroodRef", data=RptAlt, datatype="binomial",
+                              method= "GLMM.multi", link="logit", CI=0.95, nboot=10, npermut=10)
+# Returns an error: Not yet implemented
 
 # Investigating alternation and pair bond duration ------------------------
 
