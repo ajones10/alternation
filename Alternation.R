@@ -437,30 +437,30 @@ CombinedExpObsTotalL11<- filter(CombinedExpObsTotal, VisitRateDifference<=11)
 CombinedExpObsTotalL11$Type<-factor(CombinedExpObsTotalL11$Type)
 CombinedExpObsTotalL11$VisitRateDifference<-factor(CombinedExpObsTotalL11$VisitRateDifference)
 
-expobsmod<-lm(alternation_rate ~ VisitRateDifference*Type, data=CombinedExpObsTotalL11)
-par(mfrow=c(2,2))
-plot(expobsmod)
-anova(expobsmod)
-summary(expobsmod)
+#expobsmod<-lm(alternation_rate ~ VisitRateDifference*Type, data=CombinedExpObsTotalL11)
+#par(mfrow=c(2,2))
+#plot(expobsmod)
+#anova(expobsmod)
+#summary(expobsmod)
 
-library(multcomp)
+#library(multcomp)
 
-expobstukey<- glht(expobsmod, linfct=mcp(Type="Tukey"))
-summary(expobstukey)
+#expobstukey<- glht(expobsmod, linfct=mcp(Type="Tukey"))
+#summary(expobstukey)
 
-MeanObs<-filter(CombinedExpObsL14, Type=="Observed")
-MeanSim<-filter(CombinedExpObsL14, Type=="Expected")
-Meanmerge<-merge(MeanObs, MeanSim, by="VisitRateDifference")
-
-
-pairwise.t.test(Meanmerge$meanalternation.x, Meanmerge$meanalternation.y, paired=TRUE, p.adjust.method = "bonf")
+#MeanObs<-filter(CombinedExpObsL14, Type=="Observed")
+#MeanSim<-filter(CombinedExpObsL14, Type=="Expected")
+#Meanmerge<-merge(MeanObs, MeanSim, by="VisitRateDifference")
 
 
-CombinedExpObsL14<-mutate(CombinedExpObsL14, InteractionID = seq(1:nrow(CombinedExpObsL14)))
-CombinedExpObsL14$InteractionID<-factor(CombinedExpObsL14$InteractionID)
-combimodel<-lm(meanalternation~InteractionID, data=CombinedExpObsL14)
-anova(combimodel)
-summary(combimodel)
+#pairwise.t.test(Meanmerge$meanalternation.x, Meanmerge$meanalternation.y, paired=TRUE, p.adjust.method = "bonf")
+
+
+#CombinedExpObsL14<-mutate(CombinedExpObsL14, InteractionID = seq(1:nrow(CombinedExpObsL14)))
+#CombinedExpObsL14$InteractionID<-factor(CombinedExpObsL14$InteractionID)
+#combimodel<-lm(meanalternation~InteractionID, data=CombinedExpObsL14)
+#anova(combimodel)
+#summary(combimodel)
 
 # Investigating repeatability of alternation within a brood event (original method) ---------
 
