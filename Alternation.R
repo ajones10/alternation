@@ -435,7 +435,6 @@ Fig1
 {# select video files with both sex visiting
 listDVDRefwithoutOneSex <- Merged$DVDRef[(Merged$malecount ==0 | Merged$femalecount ==0 )& !is.na(Merged$DVDRef)]
 listDVDRefwithoutOneSex <- listDVDRefwithoutOneSex[!is.na(listDVDRefwithoutOneSex)]
-mfinterfeed<-rename(mfinterfeed, Interval = interfeed_interval)
 mfinterfeed<-mutate(mfinterfeed, DiffVisit1Rate = abs((round_male_visit_rate)-(round_female_visit_rate)))
 RawFeedingVisitsBothSexes <- mfinterfeed[ ! mfinterfeed$DVDRef %in% listDVDRefwithoutOneSex,c('DVDRef','TstartFeedVisit','Sex','Interval')]
 RawFeedingVisitsBothSexes$Sex <- as.numeric(RawFeedingVisitsBothSexes$Sex )
@@ -449,7 +448,7 @@ out_Asim_j = list()
 out_Asim_i = list()
 
 for (j in 1:length(unique(RawFeedingVisitsBothSexes$DVDRef))){
-  
+
   x <- split(RawFeedingVisitsBothSexes,RawFeedingVisitsBothSexes$DVDRef)[[j]]
   
   # split(RawFeedingVisitsBothSexes,RawFeedingVisitsBothSexes$DVDRef)[[2]] # a normal file
@@ -463,7 +462,7 @@ for (j in 1:length(unique(RawFeedingVisitsBothSexes$DVDRef))){
   x1 <- x[x$Sex==1,]
   
   
-  for (i in 1:2) # to increase up to 1000
+  for (i in 1:1000) # to increase up to 1000
   {
     
     x0sim <- x0
@@ -541,7 +540,7 @@ head(out_Asim_df_perDiffVisit1Rate_out2)
 
 {# summary Aobserved when both sexes visit
 
-MY_tblParentalCare_forA_bothSexes <- mfinterfeed[! MY_tblParentalCare$DVDRef %in% listDVDRefwithoutOneSex,]
+MY_tblParentalCare_forA_bothSexes <- mfinterfeed[! mfinterfeed$DVDRef %in% listDVDRefwithoutOneSex,]
 MY_tblParentalCare_perVisitRateDiff_bothSexes <- group_by(MY_tblParentalCare_forA_bothSexes, DiffVisit1Rate)
 
 Summary_MY_tblParentalCare_perVisitRateDiff_bothSexes <- summarise (MY_tblParentalCare_perVisitRateDiff_bothSexes,
