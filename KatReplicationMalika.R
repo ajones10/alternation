@@ -13,7 +13,7 @@ rm(list = ls(all = TRUE))
 library(dplyr)
 library(ggplot2)
 library(boot)
-
+library(lme4)
 }
 
 
@@ -47,7 +47,8 @@ list_non_valid_DVDRef <-
   c(MY_tblDVDInfo$DVDRef[ ! MY_tblDVDInfo$DVDInfoChickNb > 0],# 6 - where 0 chicks
     MY_tblDVDInfo$DVDRef[ ! MY_tblDVDInfo$ChickAge >5],# 906 - where still brooding (age <=5)
     MY_tblParentalCare$DVDRef[(MY_tblParentalCare$MVisit1 ==0 | MY_tblParentalCare$FVisit1 ==0 )& !is.na(MY_tblParentalCare$DVDRef)], # 171 - one sex did not visit
-    MY_tblDVDInfo$DVDRef[ !MY_tblDVDInfo$BroodRef %in% MY_tblBroods$BroodRef]) # 2 - both parents unidentified
+    MY_tblDVDInfo$DVDRef[ !MY_tblDVDInfo$BroodRef %in% MY_tblBroods$BroodRef],# 2 - both parents unidentified
+    MY_tblParentalCare$DVDRef[is.na(MY_tblParentalCare$EffectiveTime)]) # 9 files with no visits at all
 
 list_non_valid_DVDRef <- list_non_valid_DVDRef[!is.na(list_non_valid_DVDRef)]
 
@@ -59,16 +60,127 @@ MY_RawFeedingVisits  <- MY_RawFeedingVisits[ ! MY_RawFeedingVisits$DVDRef %in% l
 
 {### sample sizes
 
-nrow(MY_tblParentalCare) # 1777 DVD files
-length(unique(MY_tblDVDInfo$BroodRef)) # 962 broods videotaped at least once
+nrow(MY_tblParentalCare) # 1768 DVD files
+length(unique(MY_tblDVDInfo$BroodRef)) # 958 broods videotaped at least once
 mean(table(MY_tblDVDInfo$BroodRef)) # on average 1.8 videos per brood watched
 range(table(MY_tblDVDInfo$BroodRef)) # range from 1 to 3
 
 }
 
+# Does alternation increase with Brood Number?
+# Add together M and F visit rates together
+MY_tblParentalCare<- mutate(MY_tblParentalCare, MFVisitRate= MVisit1RateH + FVisit1RateH)
+
+a<-select(MY_tblDVDInfo, DVDRef, BroodRef, DVDInfoChickNb, ChickAge, LogRelTimeMins)
+b<-select(MY_tblParentalCare, DVDRef, DiffVisit1Rate, MFVisitRate, AlternationValue)
+c<-select(MY_tblBroods, BroodRef, Nb3, NbHatched, BreedingYear, ParentsAge, PairID, PairBroodNb, AvgMass, AvgTarsus)
+MyTable<- left_join(a, b, by= "DVDRef")
+MyTable<- left_join(MyTable, c, by="BroodRef")
+
+# There are 6 rows with NA in LogRelTimeMins, remove these
+MyTable<- filter(MyTable, !is.na(LogRelTimeMins))
+
+modela<- lmer(AlternationValue ~ 1 + PairBroodNb + ChickAge + LogRelTimeMins + NbHatched +
+                DiffVisit1Rate + (1 | PairID) + (1 | BroodRef), data=MyTable)
+summary(modela)
+
+diagnosticsmodela <- fortify(modela)
+
+# Residuals vs fitted plot:
+p1modela<- ggplot(diagnosticsmodela, aes(x= .fitted, y= .resid))+
+  geom_point()+
+  geom_hline(yintercept= 0, linetype= "dashed")+
+  theme_classic()
+p1modela
+# Q-Q plot
+p2modela<-ggplot(diagnosticsmodela, aes(sample= .scresid))+
+  stat_qq()+
+  geom_abline()+
+  theme_classic()
+p2modela
+
+# Testing Fixed Effects
+# BroodNumber
+modela<- lmer(AlternationValue ~ 1 + PairBroodNb + ChickAge + LogRelTimeMins + NbHatched +
+                DiffVisit1Rate + (1 | PairID) + (1 | BroodRef), data=MyTable)
+
+modelb<- lmer(AlternationValue ~ 1               + ChickAge + LogRelTimeMins + NbHatched +
+                DiffVisit1Rate + (1 | PairID) + (1 | BroodRef), data=MyTable)
+anova(modela, modelb)
+# Chisq = 1.6912, df = 1, p = 0.1934. No effect of BroodNumber on Alternation
+
+# Chick Age
+modela<- lmer(AlternationValue ~ 1 + PairBroodNb + ChickAge + LogRelTimeMins + NbHatched +
+                DiffVisit1Rate + (1 | PairID) + (1 | BroodRef), data=MyTable)
+modelc<- lmer(AlternationValue ~ 1 + PairBroodNb +           LogRelTimeMins + NbHatched +
+                DiffVisit1Rate + (1 | PairID) + (1 | BroodRef), data=MyTable)
+anova(modela, modelc)
+# Chisq = 52.168, df = 1, p < 0.001. Significant effect of Chick Age on Alternation
+
+# Time of Day (relative to Sunrise) (log transformed)
+modela<- lmer(AlternationValue ~ 1 + PairBroodNb + ChickAge + LogRelTimeMins + NbHatched +
+                DiffVisit1Rate + (1 | PairID) + (1 | BroodRef), data=MyTable)
+modeld<- lmer(AlternationValue ~ 1 + PairBroodNb + ChickAge +                  NbHatched +
+                DiffVisit1Rate + (1 | PairID) + (1 | BroodRef), data=MyTable)
+anova(modela, modeld)
+# Chisq = 18.795, df = 1, p < 0.001. Significant effect of time of day on Alternation
+
+# Chick Number
+modela<- lmer(AlternationValue ~ 1 + PairBroodNb + ChickAge + LogRelTimeMins + NbHatched +
+                DiffVisit1Rate + (1 | PairID) + (1 | BroodRef), data=MyTable)
+modele<- lmer(AlternationValue ~ 1 + PairBroodNb + ChickAge + LogRelTimeMins + 
+                DiffVisit1Rate + (1 | PairID) + (1 | BroodRef), data=MyTable)
+anova(modela, modele)
+# Chisq = 5.2238, df = 1, p = 0.022. Significant effect of number of chicks on Alternation
+
+# Visit Rate Difference
+modela<- lmer(AlternationValue ~ 1 + PairBroodNb + ChickAge + LogRelTimeMins + NbHatched +
+                DiffVisit1Rate + (1 | PairID) + (1 | BroodRef), data=MyTable)
+modelf<- lmer(AlternationValue ~ 1 + PairBroodNb + ChickAge + LogRelTimeMins + NbHatched +
+                                 (1 | PairID) + (1 | BroodRef), data=MyTable)
+anova(modela, modelf)
+# Chisq = 785.69, df = 1, p < 0.001. Significant effect of visit rate difference on Alternation.
 
 
+###
+# Fitness
+##
+# Chick Mass
+ggplot(MyTable, aes(x=AlternationValue, y=AvgMass))+
+  geom_point(col= 'steelblue')+
+  geom_smooth(method= 'lm')+
+  theme_classic()
 
+fitness1<-lm(AvgMass~AlternationValue, data=MyTable)
+par(mfrow=c(2,2))
+plot(fitness1)
+
+anova(fitness1) # Alternation has p=0.004
+summary(fitness1) # Rsq= 0.004, F= 8.097, df = 1, 1678, p = 0.004
+
+# Add Covariates to above
+
+fitness2<-lm(AvgMass~AlternationValue+AvgTarsus+NbHatched, data=MyTable)
+par(mfrow=c(2,2))
+plot(fitness2)
+
+anova(fitness2) 
+summary(fitness2) 
+# This one is better. Rsq = 0.6618, F = 1091, DF=3,1672, p<0.001
+# Tarsus length and brood size are significantly related to chick mass (as expected) 
+# Alternation is not
+
+# Does alternation promote greater investment?
+ggplot(MyTable, aes(x=MFVisitRate, y=AlternationValue))+
+  geom_point()+
+  geom_smooth(method="lm")+
+  theme_classic()
+
+invest1<-lm(AlternationValue ~ MFVisitRate, data=MyTable)
+par(mfrow=c(2,2))
+plot(invest1)
+anova(invest1)
+summary(invest1)
 
 ############################################ 
 # replication Bebbington & Hatchwell study #
