@@ -597,9 +597,16 @@ MyTable$Adev <-  MyTable$AlternationValue - MyTable$MeanAsim
 
 # Does alternation increase with Brood Number?
 MyTable<- filter(MyTable, !is.na(RelTimeMins))
+MyTable<- filter(MyTable, !is.na(SocialDadID))
+MyTable<- filter(MyTable, !is.na(SocialMumID))
+
+
+
+
 
 modela<- lmer(AlternationValue ~ 1 + PairBroodNb + ChickAge + RelTimeMins + NbHatched +
-                DiffVisit1Rate + (1 | PairID) + (1 | BroodRef), data=MyTable)
+                DiffVisit1Rate + (1 | SocialDadID) + (1 | SocialMumID) +
+                (1 | PairID) + (1 | BroodRef), data=MyTable)
 summary(modela)
 
 diagnosticsmodela <- fortify(modela)
@@ -620,10 +627,12 @@ p2modela
 # Testing Fixed Effects
 # BroodNumber
 modela<- lmer(AlternationValue ~ 1 + PairBroodNb + ChickAge + RelTimeMins + NbHatched +
-                DiffVisit1Rate + (1 | PairID) + (1 | BroodRef), data=MyTable)
+                DiffVisit1Rate + (1 | SocialDadID) + (1 | SocialMumID) +
+                (1 | PairID) + (1 | BroodRef), data=MyTable)
 
 modelb<- lmer(AlternationValue ~ 1               + ChickAge + RelTimeMins + NbHatched +
-                DiffVisit1Rate + (1 | PairID) + (1 | BroodRef), data=MyTable)
+                DiffVisit1Rate + (1 | SocialDadID) + (1 | SocialMumID) +
+                (1 | PairID) + (1 | BroodRef), data=MyTable)
 anova(modela, modelb)
 # Chisq = 1.6912, df = 1, p = 0.1934. No effect of BroodNumber on Alternation
 
@@ -719,6 +728,15 @@ anova(invest1)
 summary(invest1)
 
 
+# MeanADev vs MeanMFVisitRate looks like a curve with "optimal" deviation at around +6.
+# Can the deviation from expected better explain fitness? Answer - no!!
+fitness3<-lm(AvgMass~MeanAdev+AvgTarsus+NbHatched, data=MyTableBroods)
+par(mfrow=c(2,2))
+plot(fitness3)
+
+anova(fitness3) 
+summary(fitness3) 
+
 #########
 # Survival to Next Year
 ####
@@ -755,5 +773,16 @@ chicksuccessmodel<- glmer(cbind(Nb3, NbHatched) ~ MeanAlternation + MeanMFVisitR
 anova(chicksuccessmodel)
 summary(chicksuccessmodel)
 
+##
+ggplot(MyTableBroods, aes(x=DadAge, y=MeanAlternation))+
+  geom_point()+
+  geom_smooth(method="lm")+
+  theme_classic()
+
+dadagemod <- lm(MeanAlternation ~ DadAge + (1|SocialDadID), data=MyTableBroods)
+par(mfrow=c(2,2))
+plot(dadagemod)
+anova(dadagemod)
+summary(dadagemod)
 
 
