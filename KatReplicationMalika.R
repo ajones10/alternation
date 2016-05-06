@@ -67,9 +67,10 @@ range(table(MY_tblDVDInfo$BroodRef)) # range from 1 to 3
 
 }
 
-# Does alternation increase with Brood Number?
+# Create MyTable
 # Add together M and F visit rates together
 MY_tblParentalCare<- mutate(MY_tblParentalCare, MFVisitRate= MVisit1RateH + FVisit1RateH)
+
 
 a<-select(MY_tblDVDInfo, DVDRef, BroodRef, DVDInfoChickNb, ChickAge, RelTimeMins)
 b<-select(MY_tblParentalCare, DVDRef, DiffVisit1Rate, MFVisitRate, AlternationValue)
@@ -77,155 +78,6 @@ c<-select(MY_tblBroods, BroodRef, Nb3, NbHatched, BreedingYear, DadAge, MumAge, 
 MyTable<- left_join(a, b, by= "DVDRef")
 MyTable<- left_join(MyTable, c, by="BroodRef")
 
-MyTable<- filter(MyTable, !is.na(RelTimeMins))
-
-
-modela<- lmer(AlternationValue ~ 1 + PairBroodNb + ChickAge + RelTimeMins + NbHatched +
-                DiffVisit1Rate + (1 | PairID) + (1 | BroodRef), data=MyTable)
-summary(modela)
-
-diagnosticsmodela <- fortify(modela)
-
-# Residuals vs fitted plot:
-p1modela<- ggplot(diagnosticsmodela, aes(x= .fitted, y= .resid))+
-  geom_point()+
-  geom_hline(yintercept= 0, linetype= "dashed")+
-  theme_classic()
-p1modela
-# Q-Q plot
-p2modela<-ggplot(diagnosticsmodela, aes(sample= .scresid))+
-  stat_qq()+
-  geom_abline()+
-  theme_classic()
-p2modela
-
-# Testing Fixed Effects
-# BroodNumber
-modela<- lmer(AlternationValue ~ 1 + PairBroodNb + ChickAge + RelTimeMins + NbHatched +
-                DiffVisit1Rate + (1 | PairID) + (1 | BroodRef), data=MyTable)
-
-modelb<- lmer(AlternationValue ~ 1               + ChickAge + RelTimeMins + NbHatched +
-                DiffVisit1Rate + (1 | PairID) + (1 | BroodRef), data=MyTable)
-anova(modela, modelb)
-# Chisq = 1.6912, df = 1, p = 0.1934. No effect of BroodNumber on Alternation
-
-# Chick Age
-modela<- lmer(AlternationValue ~ 1 + PairBroodNb + ChickAge + RelTimeMins + NbHatched +
-                DiffVisit1Rate + (1 | PairID) + (1 | BroodRef), data=MyTable)
-modelc<- lmer(AlternationValue ~ 1 + PairBroodNb +           RelTimeMins + NbHatched +
-                DiffVisit1Rate + (1 | PairID) + (1 | BroodRef), data=MyTable)
-anova(modela, modelc)
-# Chisq = 52.168, df = 1, p < 0.001. Significant effect of Chick Age on Alternation
-
-# Time of Day (relative to Sunrise) 
-modela<- lmer(AlternationValue ~ 1 + PairBroodNb + ChickAge + RelTimeMins + NbHatched +
-                DiffVisit1Rate + (1 | PairID) + (1 | BroodRef), data=MyTable)
-modeld<- lmer(AlternationValue ~ 1 + PairBroodNb + ChickAge +                  NbHatched +
-                DiffVisit1Rate + (1 | PairID) + (1 | BroodRef), data=MyTable)
-anova(modela, modeld)
-# Chisq = 18.795, df = 1, p < 0.001. Significant effect of time of day on Alternation
-
-# Chick Number
-modela<- lmer(AlternationValue ~ 1 + PairBroodNb + ChickAge + RelTimeMins + NbHatched +
-                DiffVisit1Rate + (1 | PairID) + (1 | BroodRef), data=MyTable)
-modele<- lmer(AlternationValue ~ 1 + PairBroodNb + ChickAge + RelTimeMins + 
-                DiffVisit1Rate + (1 | PairID) + (1 | BroodRef), data=MyTable)
-anova(modela, modele)
-# Chisq = 5.2238, df = 1, p = 0.022. Significant effect of number of chicks on Alternation
-
-# Visit Rate Difference
-modela<- lmer(AlternationValue ~ 1 + PairBroodNb + ChickAge + RelTimeMins + NbHatched +
-                DiffVisit1Rate + (1 | PairID) + (1 | BroodRef), data=MyTable)
-modelf<- lmer(AlternationValue ~ 1 + PairBroodNb + ChickAge + RelTimeMins + NbHatched +
-                                 (1 | PairID) + (1 | BroodRef), data=MyTable)
-anova(modela, modelf)
-# Chisq = 785.69, df = 1, p < 0.001. Significant effect of visit rate difference on Alternation.
-
-
-###
-# Fitness
-##
-
-# Need to average MyTable by brood, to get mean alternation for each brood.
-MyTableBroods <- select(MyTable, BroodRef, AlternationValue, AvgMass, AvgTarsus, NbHatched,
-                        DadAge, MumAge, SocialMumID, SocialDadID, PairID, BreedingYear,
-                        MFVisitRate
-                        )
-MyTableBroods <- MyTableBroods%>%
-  group_by(BroodRef)%>%
-  mutate(MeanAlternation = mean(AlternationValue))%>%
-  mutate(MeanMFVisitRate = mean(MFVisitRate))%>%
-  select(-AlternationValue)%>%
-  select(-MFVisitRate)%>%
-  distinct()
-
-
-# Chick Mass
-ggplot(MyTableBroods, aes(x=MeanAlternation, y=AvgMass))+
-  geom_point(col= 'steelblue')+
-  geom_smooth(method= 'lm')+
-  theme_classic()
-
-fitness1<-lm(AvgMass~MeanAlternation, data=MyTableBroods)
-par(mfrow=c(2,2))
-plot(fitness1)
-
-anova(fitness1) # Alternation has p=0.004
-summary(fitness1) # Rsq= 0.009, F= 8.277, df = 1, 885, p = 0.004
-
-# Add Covariates to above
-
-fitness2<-lm(AvgMass~MeanAlternation+AvgTarsus+NbHatched, data=MyTableBroods)
-par(mfrow=c(2,2))
-plot(fitness2)
-
-anova(fitness2) 
-summary(fitness2) 
-# This one is better. Rsq = 0.6555, F = 558.2, DF=3,880, p<0.001
-# Tarsus length and brood size are significantly related to chick mass (as expected) 
-# Alternation is not
-
-# Does alternation promote greater investment?
-ggplot(MyTableBroods, aes(x=MeanAlternation, y=MeanMFVisitRate))+
-  geom_point()+
-  geom_smooth(method="lm")+
-  theme_classic()
-
-invest1<-lm(MeanMFVisitRate ~ MeanAlternation + NbHatched, data=MyTableBroods)
-par(mfrow=c(2,2))
-plot(invest1)
-anova(invest1)
-summary(invest1)
-
-
-#########
-# Survival to Next Year
-####
-
-# Get the Year Dad and Mum last seen alive
-MY_tblBroods$DadLastAliveYear <- as.character(MY_tblBroods$LastLiveRecordSocialDad)
-MY_tblBroods$DadLastAliveYear <- as.Date(MY_tblBroods$DadLastAliveYear, "%d.%m.%Y")
-MY_tblBroods$DadLastAliveYear <- as.numeric(format(MY_tblBroods$DadLastAliveYear, "%Y"))
-
-MY_tblBroods$MumLastAliveYear <- as.character(MY_tblBroods$LastLiveRecordSocialMum)
-MY_tblBroods$MumLastAliveYear <- as.Date(MY_tblBroods$MumLastAliveYear, "%d.%m.%Y")
-MY_tblBroods$MumLastAliveYear <- as.numeric(format(MY_tblBroods$MumLastAliveYear, "%Y"))
-
-# Get survival to next year (Binomial response, 1= survive, 0= not)
-MY_tblBroods <- mutate(MY_tblBroods, DadSurvivalToNextYear = ifelse(DadLastAliveYear > BreedingYear, 1, 0))
-MY_tblBroods <- mutate(MY_tblBroods, MumSurvivalToNextYear = ifelse(MumLastAliveYear > BreedingYear, 1, 0))
-
-ParentalSurvival<- select(MY_tblBroods, BroodRef, DadSurvivalToNextYear, MumSurvivalToNextYear)
-MyTable<- left_join(MyTable, ParentalSurvival, by = "BroodRef")
-
-# Model survival
-malesurvivalmodel1 <- glmer(DadSurvivalToNextYear ~ 1 + AlternationValue + DadAge + (1|BreedingYear), MyTable, binomial)
-anova(malesurvivalmodel1)
-summary(malesurvivalmodel1)
-
-malesurvivalmodel2 <- glmer(DadSurvivalToNextYear ~ 1 + DadAge + (1|BreedingYear), MyTable, binomial)
-
-anova(malesurvivalmodel1, malesurvivalmodel2)
 
 ############################################ 
 # replication Bebbington & Hatchwell study #
@@ -732,11 +584,176 @@ Fig1comparison <- ggplot(data=VisitRateDiff_Amean_for_comparison, aes(x=VisitRat
 
 Fig1comparison 
 
-{# add MeanAsim and Adev for each DVD file to MY_TABLE
+{# add MeanAsim and Adev for each DVD file to MyTable
 
-MY_TABLE <- merge(y=data.frame(DVDRef = unique(RawFeedingVisitsBothSexes$DVDRef),MeanAsim = rowMeans(out_Asim)), 
-                  x= MY_TABLE, by='DVDRef', all.x =TRUE)
+MyTable <- merge(y=data.frame(DVDRef = unique(RawFeedingVisitsBothSexes$DVDRef),MeanAsim = rowMeans(out_Asim)), 
+                  x= MyTable, by='DVDRef', all.x =TRUE)
 
-MY_TABLE$Adev <- MY_TABLE$MeanAsim - MY_TABLE$AlternationValue
+MyTable$Adev <-  MyTable$AlternationValue - MyTable$MeanAsim
 
 }
+
+
+
+# Does alternation increase with Brood Number?
+MyTable<- filter(MyTable, !is.na(RelTimeMins))
+
+modela<- lmer(AlternationValue ~ 1 + PairBroodNb + ChickAge + RelTimeMins + NbHatched +
+                DiffVisit1Rate + (1 | PairID) + (1 | BroodRef), data=MyTable)
+summary(modela)
+
+diagnosticsmodela <- fortify(modela)
+
+# Residuals vs fitted plot:
+p1modela<- ggplot(diagnosticsmodela, aes(x= .fitted, y= .resid))+
+  geom_point()+
+  geom_hline(yintercept= 0, linetype= "dashed")+
+  theme_classic()
+p1modela
+# Q-Q plot
+p2modela<-ggplot(diagnosticsmodela, aes(sample= .scresid))+
+  stat_qq()+
+  geom_abline()+
+  theme_classic()
+p2modela
+
+# Testing Fixed Effects
+# BroodNumber
+modela<- lmer(AlternationValue ~ 1 + PairBroodNb + ChickAge + RelTimeMins + NbHatched +
+                DiffVisit1Rate + (1 | PairID) + (1 | BroodRef), data=MyTable)
+
+modelb<- lmer(AlternationValue ~ 1               + ChickAge + RelTimeMins + NbHatched +
+                DiffVisit1Rate + (1 | PairID) + (1 | BroodRef), data=MyTable)
+anova(modela, modelb)
+# Chisq = 1.6912, df = 1, p = 0.1934. No effect of BroodNumber on Alternation
+
+# Chick Age
+modela<- lmer(AlternationValue ~ 1 + PairBroodNb + ChickAge + RelTimeMins + NbHatched +
+                DiffVisit1Rate + (1 | PairID) + (1 | BroodRef), data=MyTable)
+modelc<- lmer(AlternationValue ~ 1 + PairBroodNb +           RelTimeMins + NbHatched +
+                DiffVisit1Rate + (1 | PairID) + (1 | BroodRef), data=MyTable)
+anova(modela, modelc)
+# Chisq = 52.168, df = 1, p < 0.001. Significant effect of Chick Age on Alternation
+
+# Time of Day (relative to Sunrise) 
+modela<- lmer(AlternationValue ~ 1 + PairBroodNb + ChickAge + RelTimeMins + NbHatched +
+                DiffVisit1Rate + (1 | PairID) + (1 | BroodRef), data=MyTable)
+modeld<- lmer(AlternationValue ~ 1 + PairBroodNb + ChickAge +                  NbHatched +
+                DiffVisit1Rate + (1 | PairID) + (1 | BroodRef), data=MyTable)
+anova(modela, modeld)
+# Chisq = 18.795, df = 1, p < 0.001. Significant effect of time of day on Alternation
+
+# Chick Number
+modela<- lmer(AlternationValue ~ 1 + PairBroodNb + ChickAge + RelTimeMins + NbHatched +
+                DiffVisit1Rate + (1 | PairID) + (1 | BroodRef), data=MyTable)
+modele<- lmer(AlternationValue ~ 1 + PairBroodNb + ChickAge + RelTimeMins + 
+                DiffVisit1Rate + (1 | PairID) + (1 | BroodRef), data=MyTable)
+anova(modela, modele)
+# Chisq = 5.2238, df = 1, p = 0.022. Significant effect of number of chicks on Alternation
+
+# Visit Rate Difference
+modela<- lmer(AlternationValue ~ 1 + PairBroodNb + ChickAge + RelTimeMins + NbHatched +
+                DiffVisit1Rate + (1 | PairID) + (1 | BroodRef), data=MyTable)
+modelf<- lmer(AlternationValue ~ 1 + PairBroodNb + ChickAge + RelTimeMins + NbHatched +
+                (1 | PairID) + (1 | BroodRef), data=MyTable)
+anova(modela, modelf)
+# Chisq = 785.69, df = 1, p < 0.001. Significant effect of visit rate difference on Alternation.
+
+
+###
+# Fitness
+##
+
+# Need to average MyTable by brood, to get mean alternation for each brood.
+MyTableBroods <- select(MyTable, BroodRef, AlternationValue, AvgMass, AvgTarsus, Nb3, NbHatched,
+                        DadAge, MumAge, SocialMumID, SocialDadID, PairID, BreedingYear,
+                        MFVisitRate, Adev
+)
+MyTableBroods <- MyTableBroods%>%
+  group_by(BroodRef)%>%
+  mutate(MeanAlternation = mean(AlternationValue))%>%
+  mutate(MeanMFVisitRate = mean(MFVisitRate))%>%
+  mutate(MeanAdev = mean(Adev))%>%
+  select(-AlternationValue)%>%
+  select(-MFVisitRate)%>%
+  select(-Adev)%>%
+  distinct()
+
+
+# Chick Mass
+ggplot(MyTableBroods, aes(x=MeanAlternation, y=AvgMass))+
+  geom_point(col= 'steelblue')+
+  geom_smooth(method= 'lm')+
+  theme_classic()
+
+fitness1<-lm(AvgMass~MeanAlternation, data=MyTableBroods)
+par(mfrow=c(2,2))
+plot(fitness1)
+
+anova(fitness1) # Alternation has p=0.004
+summary(fitness1) # Rsq= 0.009, F= 8.277, df = 1, 885, p = 0.004
+
+# Add Covariates to above
+
+fitness2<-lm(AvgMass~MeanAlternation+AvgTarsus+NbHatched, data=MyTableBroods)
+par(mfrow=c(2,2))
+plot(fitness2)
+
+anova(fitness2) 
+summary(fitness2) 
+# This one is better. Rsq = 0.6555, F = 558.2, DF=3,880, p<0.001
+# Tarsus length and brood size are significantly related to chick mass (as expected) 
+# Alternation is not
+
+# Does alternation promote greater investment?
+ggplot(MyTableBroods, aes(x=MeanAdev, y=MeanMFVisitRate))+
+  geom_point()+
+  geom_smooth(method="lm")+
+  geom_vline(xintercept=mean(MyTableBroods$MeanAdev), size= 1, linetype= "dashed", colour="indianred")+
+  theme_classic()
+
+invest1<-lm(MeanMFVisitRate ~ MeanAdev + NbHatched, data=MyTableBroods)
+par(mfrow=c(2,2))
+plot(invest1)
+anova(invest1)
+summary(invest1)
+
+
+#########
+# Survival to Next Year
+####
+
+# Get the Year Dad and Mum last seen alive
+MY_tblBroods$DadLastAliveYear <- as.character(MY_tblBroods$LastLiveRecordSocialDad)
+MY_tblBroods$DadLastAliveYear <- as.Date(MY_tblBroods$DadLastAliveYear, "%d.%m.%Y")
+MY_tblBroods$DadLastAliveYear <- as.numeric(format(MY_tblBroods$DadLastAliveYear, "%Y"))
+
+MY_tblBroods$MumLastAliveYear <- as.character(MY_tblBroods$LastLiveRecordSocialMum)
+MY_tblBroods$MumLastAliveYear <- as.Date(MY_tblBroods$MumLastAliveYear, "%d.%m.%Y")
+MY_tblBroods$MumLastAliveYear <- as.numeric(format(MY_tblBroods$MumLastAliveYear, "%Y"))
+
+# Get survival to next year (Binomial response, 1= survive, 0= not)
+MY_tblBroods <- mutate(MY_tblBroods, DadSurvivalToNextYear = ifelse(DadLastAliveYear > BreedingYear, 1, 0))
+MY_tblBroods <- mutate(MY_tblBroods, MumSurvivalToNextYear = ifelse(MumLastAliveYear > BreedingYear, 1, 0))
+
+ParentalSurvival<- select(MY_tblBroods, BroodRef, DadSurvivalToNextYear, MumSurvivalToNextYear)
+MyTableBroods<- left_join(MyTableBroods, ParentalSurvival, by = "BroodRef")
+MyTableBroods$SocialDadID<-as.integer(MyTableBroods$SocialDadID)
+MyTableBroods$SocialMumID<-as.integer(MyTableBroods$SocialMumID)
+
+# Model survival
+malesurvivalmodel <- glmer(DadSurvivalToNextYear ~ 1 + MeanAlternation + DadAge + (1 + SocialDadID|BreedingYear), MyTableBroods, binomial)
+anova(malesurvivalmodel)
+summary(malesurvivalmodel)
+
+femalesurvivalmodel <- glmer(MumSurvivalToNextYear ~ 1 + MeanAlternation + MumAge + (1|BreedingYear), MyTableBroods, binomial)
+anova(femalesurvivalmodel)
+summary(femalesurvivalmodel)
+
+## Proportion of successfully reared chicks? (Chicks fledged / Chicks hatched)
+chicksuccessmodel<- glmer(cbind(Nb3, NbHatched) ~ MeanAlternation + MeanMFVisitRate + (1|PairID) + (1|BroodRef), MyTableBroods, binomial)
+anova(chicksuccessmodel)
+summary(chicksuccessmodel)
+
+
+
