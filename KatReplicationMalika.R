@@ -76,7 +76,7 @@ MY_tblParentalCare<- mutate(MY_tblParentalCare, MFVisitRate= MVisit1RateH + FVis
 
 a<-select(MY_tblDVDInfo, DVDRef, BroodRef, DVDInfoChickNb, ChickAge, RelTimeMins)
 b<-select(MY_tblParentalCare, DVDRef, DiffVisit1Rate, MFVisitRate, AlternationValue)
-c<-select(MY_tblBroods, BroodRef, Nb3, NbHatched, BreedingYear, DadAge, MumAge, ParentsAge, SocialMumID, SocialDadID, PairID, PairBroodNb, AvgMass, AvgTarsus)
+c<-select(MY_tblBroods, BroodRef, Nb3, NbHatched, NestboxRef, BreedingYear, DadAge, MumAge, ParentsAge, SocialMumID, SocialDadID, PairID, PairBroodNb, AvgMass, AvgTarsus)
 MyTable<- left_join(a, b, by= "DVDRef")
 MyTable<- left_join(MyTable, c, by="BroodRef")
 
@@ -764,7 +764,7 @@ anova(modela, modelf)
 # Need to average MyTable by brood, to get mean alternation for each brood.
 MyTableBroods <- select(MyTable, BroodRef, AlternationValue, AvgMass, AvgTarsus, Nb3, NbHatched,
                         DadAge, MumAge, SocialMumID, SocialDadID, PairID, BreedingYear,
-                        MFVisitRate, Adev
+                        MFVisitRate, Adev, PairBroodNb, NestboxRef
 )
 MyTableBroods <- MyTableBroods%>%
   group_by(BroodRef)%>%
@@ -810,11 +810,12 @@ investplot1<-ggplot(MyTableBroods, aes(x=MeanAdev, y=MeanMFVisitRate))+
   theme_classic()
 investplot1
 
-invest1<-lm(MeanMFVisitRate ~ MeanAdev + NbHatched, data=MyTableBroods)
+invest1<-lmer(MeanMFVisitRate ~ MeanAdev + NbHatched + (1|NestboxRef) + (1|SocialDadID) + (1|SocialMumID) + (1|BreedingYear) + (1|PairID), data=MyTableBroods)
 par(mfrow=c(2,2))
 plot(invest1)
 anova(invest1)
 summary(invest1)
+
 
 # Try putting MeanAdev into categories?
 MyTableBroods<- transform(MyTableBroods, RoundMeanAdev = round(MeanAdev))
@@ -870,7 +871,7 @@ MyTableBroods$SocialDadID<-as.integer(MyTableBroods$SocialDadID)
 MyTableBroods$SocialMumID<-as.integer(MyTableBroods$SocialMumID)
 
 # Model survival
-malesurvivalmodel <- glmer(DadSurvivalToNextYear ~ 1 + MeanAlternation + DadAge + (1 + SocialDadID|BreedingYear), MyTableBroods, binomial)
+malesurvivalmodel <- glmer(DadSurvivalToNextYear ~ 1 + MeanAlternation + DadAge + (1|BreedingYear), MyTableBroods, binomial)
 anova(malesurvivalmodel)
 summary(malesurvivalmodel)
 
@@ -971,3 +972,61 @@ predictormodel7<- lmer(AlternationValue ~ ParentsAge + PairBroodNb + ChickAge + 
                         NbHatched + (1 | SocialDadID) + (1 | SocialMumID) +
                         (1 | PairID) + (1 | BroodRef) + (1 | BreedingYear), data=MyTable)
 anova(predictormodel,predictormodel7)
+
+# Mean and SE of predictors
+mean(MyTable$ParentsAge)
+sd(MyTable$ParentsAge)/sqrt(length(MyTable$ParentsAge))*1.96
+mean(MyTable$ChickAge)
+sd(MyTable$ChickAge)/sqrt(length(MyTable$ChickAge))*1.96
+mean(MyTable$RelTimeMins)
+sd(MyTable$RelTimeMins)/sqrt(length(MyTable$RelTimeMins))*1.96
+mean(MyTable$NbHatched)
+sd(MyTable$NbHatched)/sqrt(length(MyTable$NbHatched))*1.96
+mean(MyTable$PairBroodNb)
+sd(MyTable$PairBroodNb)/sqrt(length(MyTable$PairBroodNb))*1.96
+mean(MyTable$DiffVisit1Rate)
+sd(MyTable$DiffVisit1Rate)/sqrt(length(MyTable$DiffVisit1Rate))*1.96
+
+####
+# Extra bits
+####
+
+# Calculate mortality?
+
+# Loop which prints:
+# The year
+# Number of females who bred that year
+# Number of males who bred that year
+# Number of females who survived to the following year
+# Number of males who survived to the following year
+
+Broods<- NULL
+Mum<- NULL
+Dad<- NULL
+for (i in 2004:2015) # incr to 2015
+{
+  Broods<-filter(MY_tblBroods, BreedingYear==i)
+  print(i)
+  print(length(unique(Broods$SocialMumID))) 
+  print(length(unique(Broods$SocialDadID)))
+  Broods<- select(Broods, SocialMumID, SocialDadID, MumSurvivalToNextYear, DadSurvivalToNextYear)
+  Mum<-select(Broods, SocialMumID, MumSurvivalToNextYear)
+  Dad<-select(Broods, SocialDadID, DadSurvivalToNextYear)
+  Mum<-rename(Mum, ID = SocialMumID)
+  Mum<-rename(Mum, Survival = MumSurvivalToNextYear)
+  Dad<-rename(Dad, ID = SocialDadID)
+  Dad<-rename(Dad, Survival = DadSurvivalToNextYear)
+  Broods<-bind_rows(Dad, Mum)
+  Broods<-distinct(Broods)
+  print(table(Broods$Survival))
+}
+# This is the output ( need to automate from the loop but not sure how )
+survival<- data.frame(Survival = c(0.858,0.468,0.449,0.274,0.632,0.614,0.733,0.304,0.873,0.747,0.352,0.287),
+                      Year = 2004:2015)
+
+ggplot(survival, aes(x=Year, y=Survival))+
+  geom_point()+
+  geom_line()+
+  geom_hline(yintercept=0.54925, size= 1, linetype= "dashed", colour="indianred")+
+  ylim(0,1)+
+  theme_classic()
