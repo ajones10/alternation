@@ -516,7 +516,7 @@ out_Asim_df_perDiffVisit1Rate_out2$Type <- "Expected"
 
 
 VisitRateDiff_Amean_bis <- as.data.frame(rbind( Summary_MY_tblParentalCare_perVisitRateDiff_bothSexes[1:21,],out_Asim_df_perDiffVisit1Rate_out2[1:21,] ))
-VisitRateDiff_Amean_bis$VisitRateDifference <- as.numeric(VisitRateDiff_Amean_bis$VisitRateDifference)
+VisitRateDiff_Amean_bis$VisitRateDifference <- as.numeric(as.character(VisitRateDiff_Amean_bis$VisitRateDifference))
 
 # T tests for each rate difference
 # In the form:
@@ -585,35 +585,48 @@ anovadata<-filter(anovadata, DiffVisit1Rate<=20)
 anovadata$DiffVisit1Rate<-as.factor(anovadata$DiffVisit1Rate)
 anovadata$Type<-as.factor(anovadata$Type)
 
-
+# Does the difference in prov rate affect alternation? ANOVA
+# Yes (as expected) F=52.92 df=19,1705, p<0.001
+Observed$DiffVisit1Rate<-as.integer(Observed$DiffVisit1Rate)
+Observed20<-filter(Observed, DiffVisit1Rate<=20)
+Observed20$DiffVisit1Rate<-as.factor(Observed20$DiffVisit1Rate)
+anmod<-lm(AlternationValue ~ DiffVisit1Rate, data=Observed20)
+anova(anmod)
+summary(anmod)
 
 with(anovadata, t.test(AlternationValue[DiffVisit1Rate==1], AlternationValue[DiffVisit1Rate==2]))
 #above is way to go by doing Observed1 Expected1 etc
 anovadata$Category<-paste(anovadata$Type, anovadata$DiffVisit1Rate)
 anovadata$Category<-as.factor(anovadata$Category)
 
-sig<- lm(AlternationValue ~ Category, data=anovadata)
-par(mfrow=c(2,2))
-plot(sig)
+# This for loop splits into each rate category
+# Then does a test of observed vs expected
+Rate<-NULL
+for (i in 0:20) # incr to 20
+{
+  Rate<-filter(anovadata, DiffVisit1Rate==i)
+  Model<- lm(AlternationValue ~ Type, data=Rate)
+  print(i)
+  Tukey<- glht(Model, linfct=mcp(Type="Tukey"))
+  print(summary(Tukey))
+}
+# Not sure if this is correct way to do (this way up to 11 is significant,
+# but in other ways only up to 6 is significant?)
+# Such as in this pairwise test (and the really long Tukey (not in script anymore))
 
-anova(sig)
-summary(sig)
+# pairwise.t.test(anovadata$AlternationValue, anovadata$Category, p.adjust.method="holm")
 
-#Doing Tukey using multcomp (Remember to install library!)
-library(multcomp)
-
-# WARNING
-# This Tukey takes AGES 
-Tukey<-(glht(sig, linfct=mcp(Category="Tukey")))
-Tukey # This shows estimates
-summary(Tukey) # This shows the whole Tukey summary
-
+# I think separating is fine, only interested in testing Obs vs Exp at each rate difference
+# category so the For loop above is ok.
 Fig1bis <- ggplot(data=VisitRateDiff_Amean_bis, aes(x=VisitRateDifference, y=Amean, group=Type, colour=Type))+
-  geom_point(size=4)+
-  geom_line(size=1.5)+
+  geom_point(size=3)+
+  geom_line(size=1)+
+  annotate("text", x=0:6,y=c(80, 78, 76, 74, 72, 70, 68),label="***", size=6)+
+  annotate("text", x=c(8,9),y=c(64, 62),label="**", size=6)+
+  annotate("text", x=c(7,10,11),y=c(66, 60, 58),label="*", size=6)+
   geom_errorbar(aes(ymin=Alower, ymax=Aupper))+
   xlab("Visit rate difference")+
-  ylab("Mean alternation")+
+  ylab("Mean alternation (%)")+
   scale_colour_manual(values=c("black", "grey"), labels=c("95% Expected", "Mean Observed"))+
   scale_x_continuous(breaks = pretty(VisitRateDiff_Amean$VisitRateDifference, n = 12)) +
   scale_y_continuous(breaks = c(0,10,20,30,40,50,60,70,80,90,100), limits=c(0, 100)) +
@@ -621,6 +634,7 @@ Fig1bis <- ggplot(data=VisitRateDiff_Amean_bis, aes(x=VisitRateDifference, y=Ame
   theme(
     axis.line.x = element_line(colour = 'black', size=0.5, linetype='solid'),
     axis.line.y = element_line(colour = 'black', size=0.5, linetype='solid'))
+  
 
 }
 
