@@ -1,9 +1,10 @@
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #	 Malika IHLE      malika_ihle@hotmail.fr
+#  Andrew Jones  
 #	 Analyse provisioning data sparrows
 #	 Start : 15/04/2015
-#	 last modif : 29/04/2016  
-#	 commit: figure comparison randomization 
+#	 last modif : 12/05/2016  
+#	 commit: ANOVA/Tukey and more complete predictors model 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
