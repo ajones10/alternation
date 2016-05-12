@@ -14,6 +14,7 @@ library(dplyr)
 library(ggplot2)
 library(boot)
 library(lme4)
+library(gridExtra)
 }
 
 
@@ -542,6 +543,70 @@ t.test2(26.07000, 24.59291 , 14.047780, 12.262149 , 10, 10) # Rate diff 19, n.s 
 t.test2(31.73333, 27.83850 , 16.105977, 13.472257 , 9, 9) # Rate diff 20, n.s p=0.59
 
 
+# Try anova
+# First make dataframe of sim and obs raw data
+out_Asim_df_perDVDRefandrew <- split(out_Asim_df,out_Asim_df$DVDRef)
+out_Asim_df_perDiffVisit1Rate_fun2 <- function(x) {
+  
+  x <- x[,-1]
+  x <- x[,-ncol(x)]
+  v <- unlist(list(x))
+  
+  return(c(
+    mean(v) # Amean
+  ))
+}
+
+out_Asim_df_out1andrew <- lapply(out_Asim_df_perDVDRefandrew,out_Asim_df_perDiffVisit1Rate_fun2)
+out_Asim_df_out2andrew <- data.frame(rownames(do.call(rbind,out_Asim_df_out1andrew)),do.call(rbind, out_Asim_df_out1andrew))
+
+nrow(out_Asim_df_out2andrew)	# 1768
+rownames(out_Asim_df_out2andrew) <- NULL
+colnames(out_Asim_df_out2andrew) <- c('DVDRef','MeanSimAlt')
+
+}
+
+Observed<- select(MY_tblParentalCare, DVDRef, AlternationValue, DiffVisit1Rate)
+Expected<- out_Asim_df_out2andrew
+DVDRefdata<- select(Observed, DVDRef, DiffVisit1Rate)
+DVDRefdata$DVDRef<-as.factor(DVDRefdata$DVDRef)
+Expected<- left_join(Expected, DVDRefdata, by = "DVDRef")
+Expected<- rename(Expected, AlternationValue = MeanSimAlt)
+
+Observed$Type <- "Observed"
+Expected$Type <- "Expected"
+
+Expected$DVDRef<-as.integer(Expected$DVDRef)
+
+anovadata<-bind_rows(Observed, Expected)
+anovadata$DiffVisit1Rate<-as.integer(anovadata$DiffVisit1Rate)
+anovadata<-filter(anovadata, DiffVisit1Rate<=20)
+anovadata$DiffVisit1Rate<-as.factor(anovadata$DiffVisit1Rate)
+anovadata$Type<-as.factor(anovadata$Type)
+
+
+
+with(anovadata, t.test(AlternationValue[DiffVisit1Rate==1], AlternationValue[DiffVisit1Rate==2]))
+#above is way to go by doing Observed1 Expected1 etc
+anovadata$Category<-paste(anovadata$Type, anovadata$DiffVisit1Rate)
+anovadata$Category<-as.factor(anovadata$Category)
+
+sig<- lm(AlternationValue ~ Category, data=anovadata)
+par(mfrow=c(2,2))
+plot(sig)
+
+anova(sig)
+summary(sig)
+
+#Doing Tukey using multcomp (Remember to install library!)
+library(multcomp)
+
+# WARNING
+# This Tukey takes AGES 
+Tukey<-(glht(sig, linfct=mcp(Category="Tukey")))
+Tukey # This shows estimates
+summary(Tukey) # This shows the whole Tukey summary
+
 Fig1bis <- ggplot(data=VisitRateDiff_Amean_bis, aes(x=VisitRateDifference, y=Amean, group=Type, colour=Type))+
   geom_point(size=4)+
   geom_line(size=1.5)+
@@ -562,6 +627,14 @@ Fig1bis <- ggplot(data=VisitRateDiff_Amean_bis, aes(x=VisitRateDifference, y=Ame
 
 Fig1bis
 
+# Effect of visit rate difference on alternation 
+# F(1,31)= 172.7, p<0.001
+altvisit<-lm(Amean ~ VisitRateDifference, data=Summary_MY_tblParentalCare_perVisitRateDiff_bothSexes)
+par(mfrow=c(2,2))
+plot(altvisit)
+
+anova(altvisit)
+summary(altvisit)
 
 {### comparison both method of randomization
 
@@ -715,11 +788,12 @@ summary(fitness2)
 # Alternation is not
 
 # Does alternation promote greater investment?
-ggplot(MyTableBroods, aes(x=MeanAdev, y=MeanMFVisitRate))+
+investplot1<-ggplot(MyTableBroods, aes(x=MeanAdev, y=MeanMFVisitRate))+
   geom_point()+
   geom_smooth(method="lm")+
   geom_vline(xintercept=mean(MyTableBroods$MeanAdev), size= 1, linetype= "dashed", colour="indianred")+
   theme_classic()
+investplot1
 
 invest1<-lm(MeanMFVisitRate ~ MeanAdev + NbHatched, data=MyTableBroods)
 par(mfrow=c(2,2))
@@ -727,6 +801,27 @@ plot(invest1)
 anova(invest1)
 summary(invest1)
 
+# Try putting MeanAdev into categories?
+MyTableBroods<- transform(MyTableBroods, RoundMeanAdev = round(MeanAdev))
+hist(MyTableBroods$RoundMeanAdev)
+MyTableBroodsSummary<- group_by(MyTableBroods, RoundMeanAdev) %>%
+  summarise(meanvisitrate = mean(MeanMFVisitRate),
+            sdvisitrate = sd(MeanMFVisitRate),
+            meanhatched = mean(NbHatched))
+investplot2<-ggplot(MyTableBroodsSummary, aes(x=RoundMeanAdev, y=meanvisitrate))+
+  geom_point()+
+  geom_smooth(method="lm")+
+  geom_vline(xintercept=mean(MyTableBroodsSummary$RoundMeanAdev), size= 1, linetype= "dashed", colour="indianred")+
+  theme_classic()
+investplot2
+
+grid.arrange(investplot1, investplot2)
+
+invest2<-lm(meanvisitrate ~ RoundMeanAdev + meanhatched, data=MyTableBroodsSummary)
+par(mfrow=c(2,2))
+plot(invest2)
+anova(invest2)
+summary(invest2)
 
 # MeanADev vs MeanMFVisitRate looks like a curve with "optimal" deviation at around +6.
 # Can the deviation from expected better explain fitness? Answer - no!!
@@ -769,6 +864,7 @@ anova(femalesurvivalmodel)
 summary(femalesurvivalmodel)
 
 ## Proportion of successfully reared chicks? (Chicks fledged / Chicks hatched)
+# Need to revisit this (as of 11052016) convergence???
 chicksuccessmodel<- glmer(cbind(Nb3, NbHatched) ~ MeanAlternation + MeanMFVisitRate + (1|PairID) + (1|BroodRef), MyTableBroods, binomial)
 anova(chicksuccessmodel)
 summary(chicksuccessmodel)
@@ -785,4 +881,78 @@ plot(dadagemod)
 anova(dadagemod)
 summary(dadagemod)
 
+# Predictor model similar to Malika style
+predictormodel<- lmer(AlternationValue ~ ParentsAge + PairBroodNb + ChickAge + RelTimeMins + 
+                        NbHatched + DiffVisit1Rate + (1 | SocialDadID) + (1 | SocialMumID) +
+                (1 | PairID) + (1 | BroodRef) + (1 | BreedingYear), data=MyTable)
+summary(predictormodel)
 
+diagnosticspredictormodel <- fortify(predictormodel)
+
+# Residuals vs fitted plot:
+predictplot<- ggplot(diagnosticspredictormodel, aes(x= .fitted, y= .resid))+
+  geom_point()+
+  geom_hline(yintercept= 0, linetype= "dashed")+
+  theme_classic()
+predictplot
+# Q-Q plot
+predictplot2<-ggplot(diagnosticspredictormodel, aes(sample= .scresid))+
+  stat_qq()+
+  geom_abline()+
+  theme_classic()
+predictplot2
+
+# Is Age significant? Yes p<0.001
+predictormodel<- lmer(AlternationValue ~ ParentsAge + PairBroodNb + ChickAge + RelTimeMins + 
+                        NbHatched + DiffVisit1Rate + (1 | SocialDadID) + (1 | SocialMumID) +
+                        (1 | PairID) + (1 | BroodRef) + (1 | BreedingYear), data=MyTable)
+predictormodel2<- lmer(AlternationValue ~  PairBroodNb + ChickAge + RelTimeMins + 
+                         NbHatched + DiffVisit1Rate + (1 | SocialDadID) + (1 | SocialMumID) +
+                         (1 | PairID) + (1 | BroodRef) + (1 | BreedingYear), data=MyTable)
+anova(predictormodel, predictormodel2)
+
+# Is brood number sig? No, p=0.08
+predictormodel<- lmer(AlternationValue ~ ParentsAge + PairBroodNb + ChickAge + RelTimeMins + 
+                        NbHatched + DiffVisit1Rate + (1 | SocialDadID) + (1 | SocialMumID) +
+                        (1 | PairID) + (1 | BroodRef) + (1 | BreedingYear), data=MyTable)
+predictormodel3<- lmer(AlternationValue ~ ParentsAge +  ChickAge + RelTimeMins + 
+                        NbHatched + DiffVisit1Rate + (1 | SocialDadID) + (1 | SocialMumID) +
+                        (1 | PairID) + (1 | BroodRef) + (1 | BreedingYear), data=MyTable)
+anova(predictormodel, predictormodel3)
+
+# Is chick age sig? Yes p<0.001
+predictormodel<- lmer(AlternationValue ~ ParentsAge + PairBroodNb + ChickAge + RelTimeMins + 
+                        NbHatched + DiffVisit1Rate + (1 | SocialDadID) + (1 | SocialMumID) +
+                        (1 | PairID) + (1 | BroodRef) + (1 | BreedingYear), data=MyTable)
+predictormodel4<- lmer(AlternationValue ~ ParentsAge + PairBroodNb + RelTimeMins + 
+                        NbHatched + DiffVisit1Rate + (1 | SocialDadID) + (1 | SocialMumID) +
+                        (1 | PairID) + (1 | BroodRef) + (1 | BreedingYear), data=MyTable)
+anova(predictormodel, predictormodel4)
+
+# Is time of day sig? Yes p<0.001
+predictormodel<- lmer(AlternationValue ~ ParentsAge + PairBroodNb + ChickAge + RelTimeMins + 
+                        NbHatched + DiffVisit1Rate + (1 | SocialDadID) + (1 | SocialMumID) +
+                        (1 | PairID) + (1 | BroodRef) + (1 | BreedingYear), data=MyTable)
+predictormodel5<- lmer(AlternationValue ~ ParentsAge + PairBroodNb + ChickAge +  
+                        NbHatched + DiffVisit1Rate + (1 | SocialDadID) + (1 | SocialMumID) +
+                        (1 | PairID) + (1 | BroodRef) + (1 | BreedingYear), data=MyTable)
+anova(predictormodel, predictormodel5)
+
+# Is number of chicks sig? Yes p=0.01
+predictormodel<- lmer(AlternationValue ~ ParentsAge + PairBroodNb + ChickAge + RelTimeMins + 
+                        NbHatched + DiffVisit1Rate + (1 | SocialDadID) + (1 | SocialMumID) +
+                        (1 | PairID) + (1 | BroodRef) + (1 | BreedingYear), data=MyTable)
+
+predictormodel6<- lmer(AlternationValue ~ ParentsAge + PairBroodNb + ChickAge + RelTimeMins + 
+                        DiffVisit1Rate + (1 | SocialDadID) + (1 | SocialMumID) +
+                        (1 | PairID) + (1 | BroodRef) + (1 | BreedingYear), data=MyTable)
+anova(predictormodel,predictormodel6)
+
+# Is the difference in prov rate sig? Yes p<0.001
+predictormodel<- lmer(AlternationValue ~ ParentsAge + PairBroodNb + ChickAge + RelTimeMins + 
+                        NbHatched + DiffVisit1Rate + (1 | SocialDadID) + (1 | SocialMumID) +
+                        (1 | PairID) + (1 | BroodRef) + (1 | BreedingYear), data=MyTable)
+predictormodel7<- lmer(AlternationValue ~ ParentsAge + PairBroodNb + ChickAge + RelTimeMins + 
+                        NbHatched + (1 | SocialDadID) + (1 | SocialMumID) +
+                        (1 | PairID) + (1 | BroodRef) + (1 | BreedingYear), data=MyTable)
+anova(predictormodel,predictormodel7)
