@@ -638,7 +638,7 @@ Fig1bis <- ggplot(data=VisitRateDiff_Amean_bis, aes(x=VisitRateDifference, y=Ame
 
 }
 
-}
+
 
 Fig1bis
 
@@ -763,7 +763,7 @@ anova(modela, modelf)
 
 # Need to average MyTable by brood, to get mean alternation for each brood.
 MyTableBroods <- select(MyTable, BroodRef, AlternationValue, AvgMass, AvgTarsus, Nb3, NbHatched,
-                        DadAge, MumAge, SocialMumID, SocialDadID, PairID, BreedingYear,
+                        DadAge, MumAge, ParentsAge, SocialMumID, SocialDadID, PairID, BreedingYear,
                         MFVisitRate, Adev, PairBroodNb, NestboxRef
 )
 MyTableBroods <- MyTableBroods%>%
@@ -792,7 +792,7 @@ summary(fitness1) # Rsq= 0.009, F= 8.277, df = 1, 885, p = 0.004
 
 # Add Covariates to above
 
-fitness2<-lm(AvgMass~MeanAlternation+AvgTarsus+NbHatched, data=MyTableBroods)
+fitness2<-lm(AvgMass~MeanAlternation+AvgTarsus+NbHatched+MeanMFVisitRate, data=MyTableBroods)
 par(mfrow=c(2,2))
 plot(fitness2)
 
@@ -805,18 +805,34 @@ summary(fitness2)
 # Does alternation promote greater investment?
 investplot1<-ggplot(MyTableBroods, aes(x=MeanAdev, y=MeanMFVisitRate))+
   geom_point()+
-  geom_smooth(method="lm")+
-  geom_vline(xintercept=mean(MyTableBroods$MeanAdev), size= 1, linetype= "dashed", colour="indianred")+
-  theme_classic()
+  geom_smooth(method="lm", colour="black")+
+  scale_x_continuous(breaks = c(-20,-10,0,10,20,30,40))+
+  scale_y_continuous(breaks = c(0, 10, 20, 30, 40, 50, 60))+
+  xlab("Mean deviation from expected alternation")+
+  ylab("Mean total provisioning rate (feeds/hour)")+
+  #geom_vline(xintercept=mean(MyTableBroods$MeanAdev), size= 1, linetype= "dashed", colour="indianred")+
+  theme_classic(base_size=15)+
+  theme(
+    axis.line.x = element_line(colour = 'black', size=0.5, linetype='solid'),
+    axis.line.y = element_line(colour = 'black', size=0.5, linetype='solid'))
 investplot1
 
-invest1<-lmer(MeanMFVisitRate ~ MeanAdev + NbHatched + (1|NestboxRef) + (1|SocialDadID) + (1|SocialMumID) + (1|BreedingYear) + (1|PairID), data=MyTableBroods)
+invest1<-lmer(MFVisitRate ~ Adev + NbHatched + ChickAge + (1|BroodRef) + (1|NestboxRef) + (1|SocialDadID) + (1|SocialMumID) + (1|BreedingYear) + (1|PairID), data=MyTable)
 par(mfrow=c(2,2))
 plot(invest1)
 anova(invest1)
 summary(invest1)
 
+invest1.1<- lmer(MeanMFVisitRate ~ MeanAdev + (1|NestboxRef) + (1|SocialDadID) + (1|SocialMumID) + (1|BreedingYear) + (1|PairID), data=MyTableBroods)
+anova(invest1, invest1.1)
 
+invest1.2<- lmer(MeanMFVisitRate ~ NbHatched + (1|NestboxRef) + (1|SocialDadID) + (1|SocialMumID) + (1|BreedingYear) + (1|PairID), data=MyTableBroods)
+anova(invest1, invest1.2)
+
+
+mod<- lm(MeanMFVisitRate ~ MeanAdev, data=MyTableBroods)
+anova(mod)
+summary(mod)
 # Try putting MeanAdev into categories?
 MyTableBroods<- transform(MyTableBroods, RoundMeanAdev = round(MeanAdev))
 hist(MyTableBroods$RoundMeanAdev)
@@ -871,11 +887,14 @@ MyTableBroods$SocialDadID<-as.integer(MyTableBroods$SocialDadID)
 MyTableBroods$SocialMumID<-as.integer(MyTableBroods$SocialMumID)
 
 # Model survival
-malesurvivalmodel <- glmer(DadSurvivalToNextYear ~ 1 + MeanAlternation + DadAge + (1|BreedingYear), MyTableBroods, binomial)
+# Cannot include 2015 breeding year as we do not know if they survived yet
+MyTableBroodsNo2015<- filter(MyTableBroods, BreedingYear!=2015)
+
+malesurvivalmodel <- glmer(DadSurvivalToNextYear ~ 1 + MeanAlternation + DadAge + (1|BreedingYear), MyTableBroodsNo2015, binomial)
 anova(malesurvivalmodel)
 summary(malesurvivalmodel)
 
-femalesurvivalmodel <- glmer(MumSurvivalToNextYear ~ 1 + MeanAlternation + MumAge + (1|BreedingYear), MyTableBroods, binomial)
+femalesurvivalmodel <- glmer(MumSurvivalToNextYear ~ 1 + MeanAlternation + MumAge + (1|BreedingYear), MyTableBroodsNo2015, binomial)
 anova(femalesurvivalmodel)
 summary(femalesurvivalmodel)
 
@@ -1030,3 +1049,75 @@ ggplot(survival, aes(x=Year, y=Survival))+
   geom_hline(yintercept=0.54925, size= 1, linetype= "dashed", colour="indianred")+
   ylim(0,1)+
   theme_classic()
+
+####
+# Deviance from mass/tarsus relationship
+ggplot(MyTableBroods, aes(x=AvgTarsus, y=AvgMass))+
+  geom_point()+
+  geom_smooth(method="lm")+
+  theme_classic()
+
+devmassmod<-lm(AvgMass ~ AvgTarsus, MyTableBroods)
+par(mfrow=c(2,2))
+plot(devmassmod)
+summary(devmassmod)
+residuals(devmassmod)
+
+MyTableBroodsForMass<- filter(MyTableBroods, !is.na(AvgMass))
+MyTableBroodsForMass<- filter(MyTableBroods, !is.na(AvgTarsus))
+
+MyTableBroodsForMass$DevMass<-residuals(devmassmod)
+fitnessdevmass<-lm(DevMass~MeanAlternation+AvgTarsus+NbHatched, data=MyTableBroodsForMass)
+plot(fitnessdevmass)
+anova(fitnessdevmass)
+summary(fitnessdevmass)
+
+
+vrmod<- lmer((Nb3/NbHatched)~MeanMFVisitRate+MeanAlternation+ParentsAge+PairBroodNb+(1|SocialMumID) + (1|SocialDadID) + (1|BreedingYear), data=MyTableBroods)
+par(mfrow=c(2,2))
+plot(vrmod)
+anova(vrmod)
+summary(vrmod)
+ggplot(MyTableBroods, aes(x=MeanMFVisitRate, y=(Nb3/NbHatched)))+
+  geom_point()+
+  theme_classic()
+
+
+###
+# Add MumID and DadID to Raw Interfeeds
+MaleIDs<- select(MyTable, DVDRef, SocialDadID)
+FemaleIDs<- select(MyTable, DVDRef, SocialMumID)
+MRawInterfeeds<- left_join(MRawInterfeeds, MaleIDs, by='DVDRef')
+FRawInterfeeds<- left_join(FRawInterfeeds, FemaleIDs, by='DVDRef')
+MRawInterfeeds<- rename(MRawInterfeeds, ID = SocialDadID)
+FRawInterfeeds<- rename(FRawInterfeeds, ID = SocialMumID)
+MRawInterfeeds<- select(MRawInterfeeds, -MVisit1RateH)
+FRawInterfeeds<- select(FRawInterfeeds, -FVisit1RateH)
+
+MInterfeedSummary<-
+  MRawInterfeeds%>%
+  group_by(DVDRef)%>%
+  summarise(
+    meaninterval = mean(Interval),
+    Sex = mean(Sex),
+    ID = mean(ID))
+FInterfeedSummary<-
+  FRawInterfeeds%>%
+  group_by(DVDRef)%>%
+  summarise(
+    meaninterval = mean(Interval),
+    Sex = mean(Sex),
+    ID = mean(ID))
+
+InterfeedSummary<- bind_rows(MInterfeedSummary, FInterfeedSummary)
+
+MRawInterfeeds<- group_by(MRawInterfeeds, DVDRef)
+
+MRawInterfeeds<-mutate(MRawInterfeeds, diff = (Interval - lag(Interval, default=first(Interval))))
+# doesnt work "expecting a single value" ???
+
+adevmod<-lm(FVisit1RateH~NbHatched, data=MY_tblParentalCare)
+par(mfrow=c(2,2))
+plot(adevmod)
+anova(adevmod)
+summary(adevmod)
