@@ -1094,28 +1094,64 @@ FRawInterfeeds<- rename(FRawInterfeeds, ID = SocialMumID)
 MRawInterfeeds<- select(MRawInterfeeds, -MVisit1RateH)
 FRawInterfeeds<- select(FRawInterfeeds, -FVisit1RateH)
 
-MInterfeedSummary<-
-  MRawInterfeeds%>%
-  group_by(DVDRef)%>%
-  summarise(
-    meaninterval = mean(Interval),
-    Sex = mean(Sex),
-    ID = mean(ID))
-FInterfeedSummary<-
-  FRawInterfeeds%>%
-  group_by(DVDRef)%>%
-  summarise(
-    meaninterval = mean(Interval),
-    Sex = mean(Sex),
-    ID = mean(ID))
 
-InterfeedSummary<- bind_rows(MInterfeedSummary, FInterfeedSummary)
+
 
 MRawInterfeeds<- group_by(MRawInterfeeds, DVDRef)
 
-MRawInterfeeds<-mutate(MRawInterfeeds, diff = (Interval - lag(Interval, default=first(Interval))))
-# doesnt work "expecting a single value" ???
+MRawInterfeeds<-mutate(MRawInterfeeds, diff = (Interval - dplyr::lag(Interval, default=first(Interval))))
+# If difference is negative (interval getting smaller) then 0
+#make diff=0 NA
+MRawInterfeeds$diff[MRawInterfeeds$diff==0]<-NA
+MRawInterfeeds<-mutate(MRawInterfeeds, Difference = as.numeric(ifelse((diff<0), 0, 1)))
 
+# Find average Difference to give P value for brood
+
+MInterfeedSummary<-
+  MRawInterfeeds%>%
+  group_by(DVDRef)%>%
+  filter(!is.na(Difference))%>%
+  summarise(
+    MaleP = mean(Difference))
+
+mean(MInterfeedSummary$MaleP)
+
+# Females
+FRawInterfeeds<- group_by(FRawInterfeeds, DVDRef)
+
+FRawInterfeeds<-mutate(FRawInterfeeds, diff = (Interval - dplyr::lag(Interval, default=first(Interval))))
+# If difference is negative (interval getting smaller) then 0
+#make diff=0 NA
+FRawInterfeeds$diff[FRawInterfeeds$diff==0]<-NA
+FRawInterfeeds<-mutate(FRawInterfeeds, Difference = as.numeric(ifelse((diff<0), 0, 1)))
+
+# Find average Difference to give P value for brood
+
+FInterfeedSummary<-
+  FRawInterfeeds%>%
+  group_by(DVDRef)%>%
+  filter(!is.na(Difference))%>%
+  summarise(
+    FemaleP = mean(Difference))
+
+mean(FInterfeedSummary$FemaleP)
+
+InterfeedSummary<- left_join(MInterfeedSummary, FInterfeedSummary, by="DVDRef")
+
+ggplot(InterfeedSummary, aes(x=FemaleP, y=MaleP))+
+  geom_point()+
+  xlim(0,1)+
+  ylim(0,1)+
+  theme_classic()
+
+InterfeedSummary<-mutate(InterfeedSummary, MalePDash = ifelse(MaleP<=0.5, MaleP, (1-MaleP)))
+InterfeedSummary<-mutate(InterfeedSummary, FemalePDash = ifelse(FemaleP<=0.5, FemaleP, (1-FemaleP)))
+par(mfrow=c(1,2))
+hist(InterfeedSummary$MalePDash)
+hist(InterfeedSummary$FemalePDash)
+
+
+#####
 adevmod<-lm(FVisit1RateH~NbHatched, data=MY_tblParentalCare)
 par(mfrow=c(2,2))
 plot(adevmod)
