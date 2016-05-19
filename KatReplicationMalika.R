@@ -12,6 +12,7 @@ rm(list = ls(all = TRUE))
 
 {### packages
 library(dplyr)
+library(tidyr)
 library(ggplot2)
 library(boot)
 library(lme4)
@@ -792,7 +793,7 @@ summary(fitness1) # Rsq= 0.009, F= 8.277, df = 1, 885, p = 0.004
 
 # Add Covariates to above
 
-fitness2<-lm(AvgMass~MeanAlternation+AvgTarsus+NbHatched+MeanMFVisitRate, data=MyTableBroods)
+fitness2<-lm(AvgMass~MeanAlternation+AvgTarsus+NbHatched, data=MyTableBroods)
 par(mfrow=c(2,2))
 plot(fitness2)
 
@@ -817,7 +818,7 @@ investplot1<-ggplot(MyTableBroods, aes(x=MeanAdev, y=MeanMFVisitRate))+
     axis.line.y = element_line(colour = 'black', size=0.5, linetype='solid'))
 investplot1
 
-invest1<-lmer(MFVisitRate ~ Adev + NbHatched + ChickAge + (1|BroodRef) + (1|NestboxRef) + (1|SocialDadID) + (1|SocialMumID) + (1|BreedingYear) + (1|PairID), data=MyTable)
+invest1<-lmer(MeanMFVisitRate ~ MeanAdev + NbHatched + (1|NestboxRef) + (1|SocialDadID) + (1|SocialMumID) + (1|BreedingYear) + (1|PairID), data=MyTableBroods)
 par(mfrow=c(2,2))
 plot(invest1)
 anova(invest1)
@@ -890,7 +891,8 @@ MyTableBroods$SocialMumID<-as.integer(MyTableBroods$SocialMumID)
 # Cannot include 2015 breeding year as we do not know if they survived yet
 MyTableBroodsNo2015<- filter(MyTableBroods, BreedingYear!=2015)
 
-malesurvivalmodel <- glmer(DadSurvivalToNextYear ~ 1 + MeanAlternation + DadAge + (1|BreedingYear), MyTableBroodsNo2015, binomial)
+MyTableBroodsNo2015$SocialDadID<-as.factor(MyTableBroodsNo2015$SocialDadID)
+malesurvivalmodel <- glmer(DadSurvivalToNextYear ~ 1 + MeanAlternation + DadAge + (1|SocialDadID) + (1|BreedingYear), MyTableBroodsNo2015, binomial)
 anova(malesurvivalmodel)
 summary(malesurvivalmodel)
 
@@ -1157,3 +1159,33 @@ par(mfrow=c(2,2))
 plot(adevmod)
 anova(adevmod)
 summary(adevmod)
+
+
+# Survival needs to look at mean alternation for INDIVIDUAL in a YEAR
+MyTableBroodsNo2015$SocialDadID<-as.integer(MyTableBroodsNo2015$SocialDadID)
+MyTableBroodsNo2015<-unite(MyTableBroodsNo2015, YearsMum, BreedingYear, SocialMumID, sep="", remove=FALSE)
+MyTableBroodsNo2015<-unite(MyTableBroodsNo2015, YearsDad, BreedingYear, SocialDadID, sep="", remove=FALSE)
+Dads<-select(MyTableBroodsNo2015, YearsDad, MeanAlternation, DadAge, SocialDadID, BreedingYear, DadSurvivalToNextYear)
+Mums<-select(MyTableBroodsNo2015, YearsMum, MeanAlternation, MumAge, SocialMumID, BreedingYear, MumSurvivalToNextYear)
+
+DadsByYear<- summarise(group_by(Dads, YearsDad),
+                       MeanAlternation = mean(MeanAlternation),
+                       DadAge = mean(DadAge),
+                       SocialDadID = mean(SocialDadID),
+                       BreedingYear = mean(BreedingYear),
+                       Survival = mean(DadSurvivalToNextYear))
+
+MumsByYear<- summarise(group_by(Mums, YearsMum),
+                       MeanAlternation = mean(MeanAlternation),
+                       MumAge = mean(MumAge),
+                       SocialMumID = mean(SocialMumID),
+                       BreedingYear = mean(BreedingYear),
+                       Survival = mean(MumSurvivalToNextYear))
+
+malesurvivalmodel2 <- glmer(Survival ~ 1 + MeanAlternation + DadAge + (1|SocialDadID) + (1|BreedingYear), DadsByYear, binomial)
+anova(malesurvivalmodel2)
+summary(malesurvivalmodel2)
+
+femalesurvivalmodel2 <- glmer(Survival ~ 1 + MeanAlternation + MumAge + (1|SocialMumID) + (1|BreedingYear), MumsByYear, binomial)
+anova(femalesurvivalmodel2)
+summary(femalesurvivalmodel2)
