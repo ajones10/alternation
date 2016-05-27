@@ -16,6 +16,7 @@ library(tidyr)
 library(ggplot2)
 library(boot)
 library(lme4)
+library(multcomp)
 library(gridExtra)
 }
 
@@ -29,11 +30,11 @@ output_folder <- "C:\\Users\\Andrew Jones\\Documents\\University\\Level 4\\Proje
 MY_tblParentalCare <- read.csv(paste(output_folder,"R_MY_tblParentalCare.csv", sep="/"))
 MY_tblBroods <- read.csv(paste(output_folder,"R_MY_tblBroods.csv", sep="/"))
 MY_tblDVDInfo <- read.csv(paste(output_folder,"R_MY_tblDVDInfo.csv", sep="/"))
-MY_RawFeedingVisits <- read.csv(paste(output_folder,"R_MY_RawFeedingVisits.xlsx", sep="/"))
+MY_RawFeedingVisits <- read.csv(paste(output_folder,"R_MY_RawFeedingVisits.csv", sep="/"))
 
 }
 
-head(MY_tblBroods) # all broods unless bot parents are unidentified, even those when one social parent not identified, even those not recorded
+head(MY_tblBroods) # all broods unless both parents are unidentified, even those when one social parent not identified, even those not recorded
 head(MY_tblDVDInfo) # metadata for all analysed videos
 head(MY_tblParentalCare) # summary stats for all analyzed videos
 head(MY_RawFeedingVisits,32) # OF directly followed by IN are merged feeding visits ; will be used for simulation
@@ -308,8 +309,7 @@ MyTable<- left_join(MyTable, c, by="BroodRef")
   
   Summary_MY_tblParentalCare_perVisitRateDiff <- summarise (MY_tblParentalCare_perVisitRateDiff,
                                                             Amean = mean(AlternationValue),
-                                                            StdDev = sd(AlternationValue),
-                                                            Alower = Amean - sd(AlternationValue)/sqrt(n())*1.96,
+                                                          Alower = Amean - sd(AlternationValue)/sqrt(n())*1.96,
                                                             Aupper = Amean + sd(AlternationValue)/sqrt(n())*1.96,
                                                             n = length(AlternationValue))
   
@@ -685,11 +685,14 @@ MyTable$Adev <-  MyTable$AlternationValue - MyTable$MeanAsim
 
 
 # Does alternation increase with Brood Number?
-MyTable<- filter(MyTable, !is.na(RelTimeMins))
+
+nrow(MyTable)
 MyTable<- filter(MyTable, !is.na(SocialDadID))
+nrow(MyTable)
 MyTable<- filter(MyTable, !is.na(SocialMumID))
-
-
+nrow(MyTable)
+MyTable<- filter(MyTable, !is.na(RelTimeMins))
+nrow(MyTable)
 
 
 
