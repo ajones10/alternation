@@ -919,7 +919,12 @@ anova(dadagemod)
 summary(dadagemod)
 
 # Predictor model similar to Malika style
-predictormodel<- lmer(AlternationValue ~ ParentsAge + PairBroodNb + ChickAge + RelTimeMins + 
+# Chick age needs to be in categories because of field protocol
+
+MyTable$ChickAgeCat[MyTable$ChickAge <10 ] <- 'Age06'
+MyTable$ChickAgeCat[MyTable$ChickAge >=10 ] <- 'Age10'
+MyTable$ChickAgeCat<-as.factor(MyTable$ChickAgeCat)
+predictormodel<- lmer(AlternationValue ~ ParentsAge + PairBroodNb + ChickAgeCat + RelTimeMins + 
                         NbHatched + DiffVisit1Rate + (1 | SocialDadID) + (1 | SocialMumID) +
                 (1 | PairID) + (1 | BroodRef) + (1 | BreedingYear), data=MyTable)
 summary(predictormodel)
@@ -940,25 +945,25 @@ predictplot2<-ggplot(diagnosticspredictormodel, aes(sample= .scresid))+
 predictplot2
 
 # Is Age significant? Yes p<0.001
-predictormodel<- lmer(AlternationValue ~ ParentsAge + PairBroodNb + ChickAge + RelTimeMins + 
+predictormodel<- lmer(AlternationValue ~ ParentsAge + PairBroodNb + ChickAgeCat + RelTimeMins + 
                         NbHatched + DiffVisit1Rate + (1 | SocialDadID) + (1 | SocialMumID) +
                         (1 | PairID) + (1 | BroodRef) + (1 | BreedingYear), data=MyTable)
-predictormodel2<- lmer(AlternationValue ~  PairBroodNb + ChickAge + RelTimeMins + 
+predictormodel2<- lmer(AlternationValue ~  PairBroodNb + ChickAgeCat + RelTimeMins + 
                          NbHatched + DiffVisit1Rate + (1 | SocialDadID) + (1 | SocialMumID) +
                          (1 | PairID) + (1 | BroodRef) + (1 | BreedingYear), data=MyTable)
 anova(predictormodel, predictormodel2)
 
 # Is brood number sig? No, p=0.08
-predictormodel<- lmer(AlternationValue ~ ParentsAge + PairBroodNb + ChickAge + RelTimeMins + 
+predictormodel<- lmer(AlternationValue ~ ParentsAge + PairBroodNb + ChickAgeCat + RelTimeMins + 
                         NbHatched + DiffVisit1Rate + (1 | SocialDadID) + (1 | SocialMumID) +
                         (1 | PairID) + (1 | BroodRef) + (1 | BreedingYear), data=MyTable)
-predictormodel3<- lmer(AlternationValue ~ ParentsAge +  ChickAge + RelTimeMins + 
+predictormodel3<- lmer(AlternationValue ~ ParentsAge +  ChickAgeCat + RelTimeMins + 
                         NbHatched + DiffVisit1Rate + (1 | SocialDadID) + (1 | SocialMumID) +
                         (1 | PairID) + (1 | BroodRef) + (1 | BreedingYear), data=MyTable)
 anova(predictormodel, predictormodel3)
 
 # Is chick age sig? Yes p<0.001
-predictormodel<- lmer(AlternationValue ~ ParentsAge + PairBroodNb + ChickAge + RelTimeMins + 
+predictormodel<- lmer(AlternationValue ~ ParentsAge + PairBroodNb + ChickAgeCat + RelTimeMins + 
                         NbHatched + DiffVisit1Rate + (1 | SocialDadID) + (1 | SocialMumID) +
                         (1 | PairID) + (1 | BroodRef) + (1 | BreedingYear), data=MyTable)
 predictormodel4<- lmer(AlternationValue ~ ParentsAge + PairBroodNb + RelTimeMins + 
@@ -967,29 +972,29 @@ predictormodel4<- lmer(AlternationValue ~ ParentsAge + PairBroodNb + RelTimeMins
 anova(predictormodel, predictormodel4)
 
 # Is time of day sig? Yes p<0.001
-predictormodel<- lmer(AlternationValue ~ ParentsAge + PairBroodNb + ChickAge + RelTimeMins + 
+predictormodel<- lmer(AlternationValue ~ ParentsAge + PairBroodNb + ChickAgeCat + RelTimeMins + 
                         NbHatched + DiffVisit1Rate + (1 | SocialDadID) + (1 | SocialMumID) +
                         (1 | PairID) + (1 | BroodRef) + (1 | BreedingYear), data=MyTable)
-predictormodel5<- lmer(AlternationValue ~ ParentsAge + PairBroodNb + ChickAge +  
+predictormodel5<- lmer(AlternationValue ~ ParentsAge + PairBroodNb + ChickAgeCat +  
                         NbHatched + DiffVisit1Rate + (1 | SocialDadID) + (1 | SocialMumID) +
                         (1 | PairID) + (1 | BroodRef) + (1 | BreedingYear), data=MyTable)
 anova(predictormodel, predictormodel5)
 
-# Is number of chicks sig? Yes p=0.01
-predictormodel<- lmer(AlternationValue ~ ParentsAge + PairBroodNb + ChickAge + RelTimeMins + 
+# Is number of chicks sig? Yes p=0.012
+predictormodel<- lmer(AlternationValue ~ ParentsAge + PairBroodNb + ChickAgeCat + RelTimeMins + 
                         NbHatched + DiffVisit1Rate + (1 | SocialDadID) + (1 | SocialMumID) +
                         (1 | PairID) + (1 | BroodRef) + (1 | BreedingYear), data=MyTable)
 
-predictormodel6<- lmer(AlternationValue ~ ParentsAge + PairBroodNb + ChickAge + RelTimeMins + 
+predictormodel6<- lmer(AlternationValue ~ ParentsAge + PairBroodNb + ChickAgeCat + RelTimeMins + 
                         DiffVisit1Rate + (1 | SocialDadID) + (1 | SocialMumID) +
                         (1 | PairID) + (1 | BroodRef) + (1 | BreedingYear), data=MyTable)
 anova(predictormodel,predictormodel6)
 
 # Is the difference in prov rate sig? Yes p<0.001
-predictormodel<- lmer(AlternationValue ~ ParentsAge + PairBroodNb + ChickAge + RelTimeMins + 
+predictormodel<- lmer(AlternationValue ~ ParentsAge + PairBroodNb + ChickAgeCat + RelTimeMins + 
                         NbHatched + DiffVisit1Rate + (1 | SocialDadID) + (1 | SocialMumID) +
                         (1 | PairID) + (1 | BroodRef) + (1 | BreedingYear), data=MyTable)
-predictormodel7<- lmer(AlternationValue ~ ParentsAge + PairBroodNb + ChickAge + RelTimeMins + 
+predictormodel7<- lmer(AlternationValue ~ ParentsAge + PairBroodNb + ChickAgeCat + RelTimeMins + 
                         NbHatched + (1 | SocialDadID) + (1 | SocialMumID) +
                         (1 | PairID) + (1 | BroodRef) + (1 | BreedingYear), data=MyTable)
 anova(predictormodel,predictormodel7)
