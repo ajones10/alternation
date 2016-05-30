@@ -77,7 +77,7 @@ MY_tblParentalCare<- mutate(MY_tblParentalCare, MFVisitRate= MVisit1RateH + FVis
 
 
 a<-select(MY_tblDVDInfo, DVDRef, BroodRef, DVDInfoChickNb, ChickAge, RelTimeMins)
-b<-select(MY_tblParentalCare, DVDRef, DiffVisit1Rate, MFVisitRate, AlternationValue)
+b<-select(MY_tblParentalCare, DVDRef, DiffVisit1Rate, MFVisitRate, AlternationValue, MVisit1RateH, FVisit1RateH)
 c<-select(MY_tblBroods, BroodRef, Nb3, NbHatched, NestboxRef, BreedingYear, DadAge, MumAge, ParentsAge, SocialMumID, SocialDadID, PairID, PairBroodNb, AvgMass, AvgTarsus)
 MyTable<- left_join(a, b, by= "DVDRef")
 MyTable<- left_join(MyTable, c, by="BroodRef")
@@ -1197,3 +1197,18 @@ summary(malesurvivalmodel2)
 femalesurvivalmodel2 <- glmer(Survival ~ 1 + MeanAlternation + MumAge + (1|SocialMumID) + (1|BreedingYear), MumsByYear, binomial)
 anova(femalesurvivalmodel2)
 summary(femalesurvivalmodel2)
+
+
+## Find mean M and F visit rates for each difference category
+VRcategories <- select(MyTable, DiffVisit1Rate, MVisit1RateH, FVisit1RateH)
+VRmeans<- summarise(group_by(VRcategories, DiffVisit1Rate),
+                    meanMaleVR = mean(MVisit1RateH),
+                    meanFemaleVR = mean(FVisit1RateH),
+                    SEMaleVR = sd(MVisit1RateH)/sqrt(n())*1.96,
+                    SEFemaleVR = sd(FVisit1RateH)/sqrt(n())*1.96,
+                    nMale = length(MVisit1RateH),
+                    nFemale = length(FVisit1RateH))
+VRmeans20 <- filter(VRmeans, DiffVisit1Rate<=20)
+
+source("http://michael.hahsler.net/SMU/EMIS7332/R/copytable.R")
+copytable(VRmeans20)
